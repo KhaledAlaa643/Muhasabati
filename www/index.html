@@ -223,6 +223,133 @@ textarea.in{resize:vertical;min-height:64px}
 (function(){
 'use strict';
 
+/* --- معالج الأخطاء العام لضمان عدم توقف التطبيق أو بقاء الشاشة بيضاء --- */
+window.onerror=function(msg,url,line,col,err){
+  console.error('App Error:',msg,'at line:',line,'col:',col,err);
+  var app=document.getElementById('app');
+  if(app&&!app.hasChildNodes()){
+    app.innerHTML='<div style="padding:28px 20px;text-align:center;font-family:sans-serif;color:#14302A;direction:rtl;">'+
+      '<h2 style="color:#B4483B;margin-bottom:8px">حدث خطأ أثناء تحميل التطبيق</h2>'+
+      '<p style="font-size:14px;color:#566D66;line-height:1.6">'+(msg||'خطأ غير متوقع')+'</p>'+
+      '<button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;border-radius:12px;background:#1E5B4E;color:#fff;border:none;font-weight:bold;font-size:15px;cursor:pointer">إعادة المحاولة</button>'+
+      '</div>';
+  }
+};
+
+/* --- توافقية كاملة مع جميع إصدارات أندرويد (Polyfills) --- */
+if(!Element.prototype.matches){
+  Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||function(s){
+    var m=(this.document||this.ownerDocument).querySelectorAll(s),i=m.length;
+    while(--i>=0&&m.item(i)!==this){}
+    return i>-1;
+  };
+}
+if(!Element.prototype.closest){
+  Element.prototype.closest=function(s){
+    var el=this;
+    while(el&&el.nodeType===1){
+      if(el.matches&&el.matches(s))return el;
+      el=el.parentElement;
+    }
+    return null;
+  };
+}
+if(!Array.prototype.includes){
+  Array.prototype.includes=function(search,start){
+    if(this==null)throw new TypeError('"this" is null or not defined');
+    var o=Object(this),len=o.length>>>0;
+    if(len===0)return false;
+    var n=start|0,k=Math.max(n>=0?n:len-Math.abs(n),0);
+    while(k<len){
+      if(o[k]===search||(typeof o[k]==='number'&&typeof search==='number'&&isNaN(o[k])&&isNaN(search)))return true;
+      k++;
+    }
+    return false;
+  };
+}
+if(!String.prototype.includes){
+  String.prototype.includes=function(search,start){
+    if(typeof start!=='number')start=0;
+    if(start+search.length>this.length)return false;
+    return this.indexOf(search,start)!==-1;
+  };
+}
+if(typeof Object.assign!=='function'){
+  Object.assign=function(target){
+    if(target==null)throw new TypeError('Cannot convert undefined or null to object');
+    var to=Object(target);
+    for(var index=1;index<arguments.length;index++){
+      var next=arguments[index];
+      if(next!=null){
+        for(var key in next){
+          if(Object.prototype.hasOwnProperty.call(next,key))to[key]=next[key];
+        }
+      }
+    }
+    return to;
+  };
+}
+if(typeof Object.values!=='function'){
+  Object.values=function(obj){
+    var res=[];
+    for(var k in obj){
+      if(Object.prototype.hasOwnProperty.call(obj,k))res.push(obj[k]);
+    }
+    return res;
+  };
+}
+if(!Array.prototype.find){
+  Array.prototype.find=function(predicate){
+    if(this==null)throw new TypeError('"this" is null');
+    var list=Object(this),length=list.length>>>0,thisArg=arguments[1];
+    for(var i=0;i<length;i++){if(predicate.call(thisArg,list[i],i,list))return list[i];}
+  };
+}
+if(!Array.prototype.findIndex){
+  Array.prototype.findIndex=function(predicate){
+    if(this==null)throw new TypeError('"this" is null');
+    var list=Object(this),length=list.length>>>0,thisArg=arguments[1];
+    for(var i=0;i<length;i++){if(predicate.call(thisArg,list[i],i,list))return i;}
+    return -1;
+  };
+}
+// Polyfill for ParentNode.append (Chrome < 54 / Android 5-6 WebView)
+(function(arr){
+  for(var a=0;a<arr.length;a++){
+    var proto=arr[a];
+    if(proto&&!proto.append){
+      proto.append=function(){
+        var args=Array.prototype.slice.call(arguments),frag=document.createDocumentFragment();
+        for(var i=0;i<args.length;i++){
+          var arg=args[i];
+          frag.appendChild((arg&&arg.nodeType)?arg:document.createTextNode(String(arg)));
+        }
+        this.appendChild(frag);
+      };
+    }
+  }
+})([Element.prototype, Document.prototype, DocumentFragment.prototype]);
+
+// Polyfill for ChildNode.remove (Chrome < 29)
+(function(arr){
+  for(var a=0;a<arr.length;a++){
+    var proto=arr[a];
+    if(proto&&!proto.remove){
+      proto.remove=function(){
+        if(this.parentNode)this.parentNode.removeChild(this);
+      };
+    }
+  }
+})([typeof Element!=='undefined'?Element.prototype:null, typeof CharacterData!=='undefined'?CharacterData.prototype:null].filter(Boolean));
+
+// Polyfill for NodeList & HTMLCollection forEach (Chrome < 51)
+if(typeof NodeList!=='undefined'&&!NodeList.prototype.forEach){
+  NodeList.prototype.forEach=Array.prototype.forEach;
+}
+if(typeof HTMLCollection!=='undefined'&&!HTMLCollection.prototype.forEach){
+  HTMLCollection.prototype.forEach=Array.prototype.forEach;
+}
+
 /* ---------- ثوابت وأدوات ---------- */
 const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const INIT=['ح','ن','ث','ر','خ','ج','س'];
@@ -246,8 +373,8 @@ const BENEFITS=[
   {text:'﴿يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ﴾',src:'سورة البقرة: 153',label:'آية كريمة'},
   {text:'«أحب الأعمال إلى الله أدومها وإن قل»',src:'متفق عليه',label:'حديث شريف'},
 ];
-let currentBenefitIdx=(()=>{
-  const d=today();
+let currentBenefitIdx=(function(){
+  var n=new Date();var d=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   return (d.getFullYear()*366+d.getMonth()*31+d.getDate())%BENEFITS.length;
 })();
 
@@ -263,8 +390,11 @@ function renderBenefitBanner(){
   const content=h('div',{class:'benefit-content'},
     h('div',{class:'benefit-text'},b.text));
   const maxDots=Math.min(BENEFITS.length,7);
-  const dots=h('div',{class:'benefit-dots'},
-    Array.from({length:maxDots},(_,i)=>h('span',{class:'benefit-dot'+((currentBenefitIdx%maxDots)===i?' active':'')})));
+  const dotKids=[];
+  for(let i=0;i<maxDots;i++){
+    dotKids.push(h('span',{class:'benefit-dot'+((currentBenefitIdx%maxDots)===i?' active':'')}));
+  }
+  const dots=h('div',{class:'benefit-dots'},dotKids);
   const bottom=h('div',{class:'benefit-bottom'},
     h('div',{class:'benefit-src'},b.src),
     dots);
@@ -344,7 +474,7 @@ const QUICK_LISTS=[
 ];
 
 const $=(s,r)=>(r||document).querySelector(s);
-const pad=n=>String(n).padStart(2,'0');
+const pad=n=>(n<10?'0':'')+n;
 const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const parse=k=>{const p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
 const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
@@ -396,22 +526,37 @@ const tspan=(a,b)=>h('span',{class:'t'},a+(b?' – '+b:''));
 const KEY='muhasabati.v1';
 let mode='memory',memory=null;
 const store={
-  async get(){
+  get:function(){
     try{
       if(window.storage&&window.storage.get){
         mode='claude';
-        try{const r=await window.storage.get(KEY);return r&&r.value?JSON.parse(r.value):null;}catch(e){return null;}
+        return Promise.resolve(window.storage.get(KEY)).then(function(r){
+          return r&&r.value?JSON.parse(r.value):null;
+        }).catch(function(){return null;});
       }
     }catch(e){}
-    try{const v=window.localStorage.getItem(KEY);mode='local';return v?JSON.parse(v):null;}
-    catch(e){mode='memory';return memory;}
+    try{
+      var v=window.localStorage.getItem(KEY);
+      mode='local';
+      return Promise.resolve(v?JSON.parse(v):null);
+    }catch(e){
+      mode='memory';
+      return Promise.resolve(memory);
+    }
   },
-  async set(v){
+  set:function(v){
     memory=v;
     try{
-      if(mode==='claude')await window.storage.set(KEY,JSON.stringify(v));
-      else if(mode==='local')window.localStorage.setItem(KEY,JSON.stringify(v));
-    }catch(e){mode='memory';}
+      if(mode==='claude'&&window.storage&&window.storage.set){
+        return Promise.resolve(window.storage.set(KEY,JSON.stringify(v))).catch(function(){mode='memory';});
+      }else if(mode==='local'){
+        window.localStorage.setItem(KEY,JSON.stringify(v));
+        return Promise.resolve();
+      }
+    }catch(e){
+      mode='memory';
+    }
+    return Promise.resolve();
   }
 };
 let timer=null;
@@ -453,7 +598,7 @@ function moveItem(srcId,tgtId){
     src.start=tgt.start;src.end=tgt.end;
     tgt.start=tmpS;tgt.end=tmpE;
   }
-  const [moved]=S.items.splice(srcIdx,1);
+  const moved=S.items.splice(srcIdx,1)[0];
   const newTgtIdx=S.items.findIndex(i=>i.id===tgtId);
   S.items.splice(srcIdx<tgtIdx?newTgtIdx+1:newTgtIdx,0,moved);
   save();
@@ -522,7 +667,7 @@ function streak(i){
 }
 function goalCount(g,from,to){
   let n=0;
-  for(const e of g.entries){if((!from||e.d>=from)&&(!to||e.d<=to))n+=e.n;}
+  g.entries.forEach(function(e){if((!from||e.d>=from)&&(!to||e.d<=to))n+=e.n;});
   const ids=new Set(S.items.filter(i=>i.goal===g.id).map(i=>i.id));
   if(ids.size)for(const k in S.log){
     if((from&&k<from)||(to&&k>to))continue;
@@ -549,9 +694,9 @@ const weekDays=k=>{const s=parse(weekStartOf(k));return [0,1,2,3,4,5,6].map(n=>k
 function deleteItem(id){
   const it=S.items.find(i=>i.id===id);if(!it)return;
   const g=it.goal&&S.goals.find(x=>x.id===it.goal);
-  for(const k of Object.keys(S.log)){
-    if(S.log[k][id]){if(g)g.entries.push({d:k,n:1});delete S.log[k][id];if(!Object.keys(S.log[k]).length)delete S.log[k];}
-  }
+  Object.keys(S.log).forEach(function(k){
+    if(S.log[k]&&S.log[k][id]){if(g)g.entries.push({d:k,n:1});delete S.log[k][id];if(S.log[k]&&!Object.keys(S.log[k]).length)delete S.log[k];}
+  });
   S.items=S.items.filter(i=>i.id!==id);
 }
 function deleteGoal(id){S.goals=S.goals.filter(g=>g.id!==id);S.items.forEach(i=>{if(i.goal===id)i.goal=null;});}
@@ -591,16 +736,21 @@ function applyTemplate(){
 
 /* ---------- تصدير ---------- */
 function readText(f){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result));r.onerror=no;r.readAsText(f);});}
+function fallbackDownload(name,text,type){
+  try{
+    const a=h('a',{href:URL.createObjectURL(new Blob([text],{type:type||'application/octet-stream'})),download:name});
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+  }catch(e){}
+}
 function download(name,text,type){
   const cap=window.Capacitor,P=cap&&cap.Plugins;
   if(cap&&cap.isNativePlatform&&cap.isNativePlatform()&&P&&P.Filesystem&&P.Share){
     P.Filesystem.writeFile({path:name,data:text,directory:'CACHE',encoding:'utf8'})
       .then(r=>P.Share.share({title:name,files:[r.uri]}))
-      .catch(()=>{});
+      .catch(()=>fallbackDownload(name,text,type));
     return;
   }
-  const a=h('a',{href:URL.createObjectURL(new Blob([text],{type:type||'application/octet-stream'})),download:name});
-  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+  fallbackDownload(name,text,type);
 }
 const esc=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
 function buildICS(until){
@@ -783,7 +933,8 @@ function viewCharts(){
       const d=parse(slice[0]);
       weeks.push({label:d.getDate()+'/'+pad(d.getMonth()+1),pct:avg,hasData:ss.length>0});
     }
-    const maxPct=Math.max(...weeks.map(w=>w.pct),1);
+    var pctArr=weeks.map(w=>w.pct);pctArr.push(1);
+    const maxPct=Math.max.apply(null,pctArr);
     weeks.forEach(w=>{
       const col=h('div',{class:'chart-col'});
       col.appendChild(h('div',{class:'chart-pct'},w.hasData?w.pct+'%':''));
@@ -824,7 +975,7 @@ function viewCharts(){
         if(isDone(k,i.id))iStats[i.id].done++;
       });
     });
-    const sorted=Object.values(iStats).filter(x=>x.due>=3).sort((a,b)=>(b.done/b.due)-(a.done/a.due)).slice(0,5);
+    const sorted=Object.keys(iStats).map(k=>iStats[k]).filter(x=>x.due>=3).sort((a,b)=>(b.done/b.due)-(a.done/a.due)).slice(0,5);
     if(sorted.length){
       const card=h('div',{class:'card'});
       sorted.forEach((x,idx)=>{
@@ -856,7 +1007,8 @@ function itemEditor(it){
   const isAll=allDays.every(n=>days.has(n));
   const isWork=[0,1,2,3,4].every(n=>days.has(n))&&days.size===5;
   const isWkend=[5,6].every(n=>days.has(n))&&days.size===2;
-  const initialPreset=isAll?'all':isWork?'workdays':isWkend?'weekend':days.size===1?String([...days][0]):'custom';
+  var firstDay=-1;days.forEach(function(v){if(firstDay<0)firstDay=v;});
+  const initialPreset=isAll?'all':isWork?'workdays':isWkend?'weekend':days.size===1?String(firstDay):'custom';
 
   const daySel=h('select',{class:'in'},
     h('option',{value:'all'},'كل يوم (طوال الأسبوع)'),
@@ -903,7 +1055,8 @@ function itemEditor(it){
     if(!nm){err.textContent='اكتب اسم العنصر.';name.focus();return null;}
     if(!days.size){err.textContent='اختار يوم واحد على الأقل.';return null;}
     if(en.value&&!st.value){err.textContent='اكتب وقت البداية قبل وقت النهاية.';return null;}
-    return {name:nm,days:[...days].sort(),start:st.value,end:en.value,goal:gs.value||null,since:since.value||''};
+    var daysArr=[];days.forEach(function(v){daysArr.push(v);});
+    return {name:nm,days:daysArr.sort(),start:st.value,end:en.value,goal:gs.value||null,since:since.value||''};
   };
   const foot=[
     h('button',{class:'btn primary',onclick:()=>{const v=doSave();if(!v)return;
@@ -1020,7 +1173,7 @@ function setupDrag(rowEl,handleEl,itemId){
     activeDragId=itemId;
     isTouchDragging=true;
     rowEl.classList.add('dragging');
-    if(navigator.vibrate)navigator.vibrate(25);
+    try{if(navigator.vibrate)navigator.vibrate(25);}catch(err){}
   },{passive:true});
 
   handleEl.addEventListener('touchmove',e=>{
@@ -1162,6 +1315,7 @@ function viewGoals(){
     if(names.length>1||n)p.append(h('div',{class:'grp'},n||'أهداف أخرى'));
     groups[n].forEach(g=>p.append(goalCard(g)));
   });
+  p.append(h('div',{class:'task-bottom-spacer',style:'height:80px;clear:both','aria-hidden':'true'}));
   return p;
 }
 
@@ -1236,9 +1390,11 @@ function viewSettings(){
         h('div',{class:'contact-info'},
           h('div',{class:'contact-name'},'خالد علاء (واتساب)'),
           h('div',{class:'contact-handle',style:'direction:ltr;text-align:right'},'+20 111 040 0862')),
-        h('a',{class:'contact-btn',href:'https://wa.me/201110400862?text='+encodeURIComponent('السلام عليكم أستاذ خالد، تواصلت معك بخصوص تطبيق محاسبتي'),target:'_blank',rel:'noopener',style:'text-decoration:none;display:inline-flex;align-items:center;justify-content:center',onclick:e=>{
-          e.preventDefault();
-          window.open('https://wa.me/201110400862?text='+encodeURIComponent('السلام عليكم أستاذ خالد، تواصلت معك بخصوص تطبيق محاسبتي'),'_blank','noopener,noreferrer');
+        h('a',{class:'contact-btn',href:'https://wa.me/201110400862?text='+encodeURIComponent('السلام عليكم أستاذ خالد، تواصلت معك بخصوص تطبيق محاسبتي'),target:'_blank',rel:'noopener noreferrer',style:'text-decoration:none;display:inline-flex;align-items:center;justify-content:center',onclick:e=>{
+          if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){
+            e.preventDefault();
+            window.location.href='https://wa.me/201110400862?text='+encodeURIComponent('السلام عليكم أستاذ خالد، تواصلت معك بخصوص تطبيق محاسبتي');
+          }
         }},'تواصل')),
       h('div',{class:'contact-divider'}),
       h('div',{class:'contact-row'},
@@ -1246,9 +1402,11 @@ function viewSettings(){
         h('div',{class:'contact-info'},
           h('div',{class:'contact-name'},'خالد علاء (تليجرام)'),
           h('div',{class:'contact-handle',style:'direction:ltr;text-align:right'},'@KhaledAlaa643')),
-        h('a',{class:'contact-btn',href:'https://t.me/KhaledAlaa643',target:'_blank',rel:'noopener',style:'text-decoration:none;display:inline-flex;align-items:center;justify-content:center',onclick:e=>{
-          e.preventDefault();
-          window.open('https://t.me/KhaledAlaa643','_blank','noopener,noreferrer');
+        h('a',{class:'contact-btn',href:'https://t.me/KhaledAlaa643',target:'_blank',rel:'noopener noreferrer',style:'text-decoration:none;display:inline-flex;align-items:center;justify-content:center',onclick:e=>{
+          if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){
+            e.preventDefault();
+            window.location.href='https://t.me/KhaledAlaa643';
+          }
         }},'تواصل'))));
 
   /* --- التوقيت صيفي / شتوي --- */
@@ -1333,8 +1491,18 @@ function render(){
   window.scrollTo(0,y);
 }
 
-store.get().then(d=>{S=normalize(d);render();
-  setInterval(()=>{if(!sheetEl&&UI.tab==='today'&&UI.date===todayKey()&&!document.hidden&&!document.activeElement.matches('input,textarea,select'))render();},60000);
+function isEditingInput(){
+  try{
+    var ae=document.activeElement;
+    if(!ae)return false;
+    var tag=(ae.tagName||'').toLowerCase();
+    return tag==='input'||tag==='textarea'||tag==='select';
+  }catch(e){return false;}
+}
+
+function startApp(d){
+  S=normalize(d);render();
+  setInterval(()=>{if(!sheetEl&&UI.tab==='today'&&UI.date===todayKey()&&!document.hidden&&!isEditingInput())render();},60000);
   setInterval(()=>{if(!sheetEl&&UI.tab==='today'&&!document.hidden)changeBenefit(1);},7000);
   try{
     if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App){
@@ -1346,6 +1514,11 @@ store.get().then(d=>{S=normalize(d);render();
       });
     }
   }catch(e){}
+}
+
+store.get().then(startApp).catch(function(err){
+  console.error('Storage load failed, falling back to blank state:',err);
+  startApp(null);
 });
 })();
 </script>
