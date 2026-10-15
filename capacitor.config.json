@@ -1,0 +1,8 @@
+{
+  "appId": "com.muhasabati.app",
+  "appName": "محاسبتي",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
