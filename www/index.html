@@ -2,18 +2,43 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1E5B4E">
 <meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
 <title>محاسبتي</title>
 <style>
-/* --- benefit banner --- */
-.benefit-banner{margin:8px 16px 0;padding:12px 14px;background:linear-gradient(135deg,var(--pine) 0%,#0f3d31 100%);border-radius:14px;color:var(--pine-ink);font-size:.9rem;line-height:1.6;position:relative;overflow:hidden}
-.benefit-banner::before{content:'';position:absolute;top:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.06)}
-.benefit-banner .benefit-label{font-size:.73rem;font-weight:700;opacity:.75;margin-bottom:4px;letter-spacing:.04em}
-.benefit-banner .benefit-text{font-weight:600}
-.benefit-banner .benefit-src{font-size:.76rem;opacity:.65;margin-top:5px;font-style:italic}
-@media (prefers-color-scheme: dark){.benefit-banner{background:linear-gradient(135deg,#1a5c49 0%,#0b2e23 100%)}}
+/* --- benefit banner slider --- */
+.benefit-banner{margin:10px 16px 0;padding:14px 16px 12px;background:#FFFFFF;border:1.5px solid var(--pine);border-right:5px solid var(--pine);border-radius:16px;color:var(--ink);position:relative;overflow:hidden;user-select:none;touch-action:pan-y;box-shadow:0 3px 12px rgba(30,91,78,.08)}
+.benefit-banner::before{content:'';position:absolute;top:-24px;left:-24px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(30,91,78,.06) 0%,transparent 70%);pointer-events:none}
+.benefit-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.benefit-label{font-size:.76rem;font-weight:800;background:var(--pine);color:var(--pine-ink);padding:3px 11px;border-radius:99px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.benefit-controls{display:flex;align-items:center;gap:6px}
+.benefit-counter{font-size:.78rem;color:var(--ink2);font-weight:800;min-width:32px;text-align:center}
+.benefit-nav-btn{width:28px;height:28px;border-radius:50%;background:var(--soft);border:1px solid var(--line);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.benefit-nav-btn:active{background:var(--pine);color:var(--pine-ink);border-color:var(--pine)}
+.benefit-content{min-height:56px;display:flex;flex-direction:column;justify-content:center;padding:4px 0}
+.benefit-text{font-weight:700;font-size:1.02rem;line-height:1.7;color:#061F18}
+.benefit-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+.benefit-src{font-size:.84rem;color:var(--pine);font-weight:800}
+.benefit-dots{display:flex;gap:5px;align-items:center}
+.benefit-dot{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .2s ease}
+.benefit-dot.active{width:18px;border-radius:4px;background:var(--pine)}
+@media (prefers-color-scheme: dark){
+  .benefit-banner{background:linear-gradient(135deg,#0E241E 0%,#081713 100%);border-color:var(--pine);border-right-color:var(--pine);box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .benefit-banner::before{background:radial-gradient(circle,rgba(255,255,255,.05) 0%,transparent 70%)}
+  .benefit-text{color:#FFFFFF}
+  .benefit-label{background:var(--saffron);color:#1A1305}
+  .benefit-src{color:var(--saffron)}
+  .benefit-counter{color:var(--ink2)}
+  .benefit-nav-btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#FFFFFF}
+  .benefit-nav-btn:active{background:var(--saffron);color:#1A1305;border-color:var(--saffron)}
+  .benefit-bottom{border-top-color:rgba(255,255,255,.12)}
+  .benefit-dot{background:rgba(255,255,255,.25)}
+  .benefit-dot.active{background:var(--saffron)}
+}
 /* --- help tooltip & field header --- */
 .f-block{margin-top:14px}
 .f-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -81,8 +106,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .t{direction:ltr;unicode-bidi:isolate;display:inline-block}
 .ico{display:inline-flex;vertical-align:middle}
 
-.app{max-width:560px;margin:0 auto;min-height:100vh;min-height:100dvh;padding-bottom:calc(100px + env(safe-area-inset-bottom))}
-.top{padding:calc(16px + env(safe-area-inset-top)) 18px 4px}
+.app{max-width:560px;margin:0 auto;min-height:100vh;min-height:100dvh;padding-bottom:160px;padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+.top{padding:16px 18px 4px;padding:calc(16px + env(safe-area-inset-top)) 18px 4px}
 .brand{font-size:1.4rem;font-weight:800;color:var(--pine)}
 .page{padding:6px 16px 0}
 .banner{margin:8px 16px 0;padding:10px 12px;border:1px solid var(--saffron);border-radius:12px;font-size:.88rem}
@@ -175,11 +200,11 @@ textarea.in{resize:vertical;min-height:64px}
 .err{color:var(--bad);font-weight:700;font-size:.9rem;margin-top:12px;min-height:1.2em}
 .hint{font-size:.84rem;color:var(--ink2);margin:6px 0 0}
 
-.tabs{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.tabs{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:0;padding-bottom:env(safe-area-inset-bottom);z-index:5}
 .tab{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.76rem;font-weight:700;color:var(--ink2);position:relative}
 .tab[aria-current="page"]{color:var(--pine)}
 .tab[aria-current="page"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--pine)}
-.fab{position:fixed;left:max(16px,calc(50% - 264px));bottom:calc(78px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--pine);color:var(--pine-ink);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:6}
+.fab{position:fixed;left:max(16px,calc(50% - 264px));bottom:78px;bottom:calc(78px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--pine);color:var(--pine-ink);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:6}
 
 .overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--overlay);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:560px;max-height:90vh;max-height:90dvh;background:var(--surface);border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:up .2s ease-out}
@@ -187,7 +212,7 @@ textarea.in{resize:vertical;min-height:64px}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 0 8px}
 .sheet-head h2{margin:0 8px;font-size:1.15rem}
 .sheet-body{padding:0 16px 8px;overflow:auto;-webkit-overflow-scrolling:touch}
-.sheet-foot{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.sheet-foot{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px 14px;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
 .sheet-foot .primary{flex:1}
 @media (prefers-reduced-motion: reduce){.sheet{animation:none}}
 </style>
@@ -206,6 +231,8 @@ const BYDAY=['SU','MO','TU','WE','TH','FR','SA'];
 
 /* ---------- آيات وأحاديث ---------- */
 const BENEFITS=[
+  {text:'«حاسبوا أنفسكم قبل أن تحاسبوا، وزنوها قبل أن توزنوا، وتزينوا للعرض الأكبر»',src:'عمر بن الخطاب رضي الله عنه',label:'أثر شريف'},
+  {text:'﴿يَا أَيُّهَا الَّذِينَ آمَنُوا اتَّقُوا اللَّهَ وَلْتَنظُرْ نَفْسٌ مَّا قَدَّمَتْ لِغَدٍ ۖ وَاتَّقُوا اللَّهَ ۚ إِنَّ اللَّهَ خَبِيرٌ بِمَا تَعْمَلُونَ﴾',src:'سورة الحشر: 18',label:'آية كريمة'},
   {text:'﴿وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا﴾',src:'سورة العنكبوت: 69',label:'آية كريمة'},
   {text:'«إن الله يحب إذا عمل أحدكم عملاً أن يتقنه»',src:'رواه الطبراني والبيهقي',label:'حديث شريف'},
   {text:'﴿فَإِذَا فَرَغْتَ فَانصَبْ - وَإِلَى رَبِّكَ فَارْغَب﴾',src:'سورة الشرح: 7-8',label:'آية كريمة'},
@@ -219,10 +246,56 @@ const BENEFITS=[
   {text:'﴿يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ﴾',src:'سورة البقرة: 153',label:'آية كريمة'},
   {text:'«أحب الأعمال إلى الله أدومها وإن قل»',src:'متفق عليه',label:'حديث شريف'},
 ];
-function getDailyBenefit(){
+let currentBenefitIdx=(()=>{
   const d=today();
-  const idx=(d.getFullYear()*366+d.getMonth()*31+d.getDate())%BENEFITS.length;
-  return BENEFITS[idx];
+  return (d.getFullYear()*366+d.getMonth()*31+d.getDate())%BENEFITS.length;
+})();
+
+function renderBenefitBanner(){
+  const b=BENEFITS[currentBenefitIdx];
+  const wrap=h('div',{class:'benefit-banner',role:'region','aria-label':'فائدة اليوم'});
+  const counter=h('span',{class:'benefit-counter'},(currentBenefitIdx+1)+' / '+BENEFITS.length);
+  const prevBtn=h('button',{class:'benefit-nav-btn','aria-label':'السابق',type:'button',onclick:e=>{e.stopPropagation();changeBenefit(-1);}},icon('chevR',14));
+  const nextBtn=h('button',{class:'benefit-nav-btn','aria-label':'التالي',type:'button',onclick:e=>{e.stopPropagation();changeBenefit(1);}},icon('chevL',14));
+  const top=h('div',{class:'benefit-top'},
+    h('span',{class:'benefit-label'},b.label),
+    h('div',{class:'benefit-controls'},prevBtn,counter,nextBtn));
+  const content=h('div',{class:'benefit-content'},
+    h('div',{class:'benefit-text'},b.text));
+  const maxDots=Math.min(BENEFITS.length,7);
+  const dots=h('div',{class:'benefit-dots'},
+    Array.from({length:maxDots},(_,i)=>h('span',{class:'benefit-dot'+((currentBenefitIdx%maxDots)===i?' active':'')})));
+  const bottom=h('div',{class:'benefit-bottom'},
+    h('div',{class:'benefit-src'},b.src),
+    dots);
+  wrap.append(top,content,bottom);
+
+  let startX=0,startY=0;
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length===1){startX=e.touches[0].clientX;startY=e.touches[0].clientY;}
+  },{passive:true});
+  wrap.addEventListener('touchend',e=>{
+    if(!startX)return;
+    const diffX=e.changedTouches[0].clientX-startX;
+    const diffY=e.changedTouches[0].clientY-startY;
+    if(Math.abs(diffX)>35&&Math.abs(diffX)>Math.abs(diffY)){
+      if(diffX>0)changeBenefit(-1);else changeBenefit(1);
+    }
+    startX=0;
+  },{passive:true});
+
+  return wrap;
+}
+function changeBenefit(delta){
+  currentBenefitIdx=(currentBenefitIdx+delta+BENEFITS.length)%BENEFITS.length;
+  const oldB=$('.benefit-banner');
+  if(oldB&&oldB.parentNode){
+    const nextB=renderBenefitBanner();
+    oldB.parentNode.replaceChild(nextB,oldB);
+  }
+}
+function getDailyBenefit(){
+  return BENEFITS[currentBenefitIdx];
 }
 
 /* ---------- قوائم إسلامية جاهزة ---------- */
@@ -350,10 +423,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&S)save();}
 /* ---------- الحالة ---------- */
 let S=null;
 const UI={tab:'today',date:todayKey(),anchor:todayKey(),chartRange:'week'};
-const blank=()=>({v:1,items:[],goals:[],log:{},reviews:{},settings:{weekStart:6}});
+const blank=()=>({v:1,items:[],goals:[],log:{},reviews:{},settings:{weekStart:6,timeMode:'winter'}});
 function normalize(d){
   const s=Object.assign(blank(),d||{});
-  s.settings=Object.assign({weekStart:6},s.settings||{});
+  s.settings=Object.assign({weekStart:6,timeMode:'winter'},s.settings||{});
   s.items=(s.items||[]).map(i=>Object.assign({id:uid(),name:'',days:[0,1,2,3,4,5,6],start:'',end:'',goal:null,since:''},i));
   s.goals=(s.goals||[]).map(g=>Object.assign({id:uid(),name:'',unit:'',target:0,start:todayKey(),deadline:'',weekly:0,group:'',outcome:'',entries:[]},g));
   s.log=s.log||{};s.reviews=s.reviews||{};
@@ -385,6 +458,50 @@ function moveItem(srcId,tgtId){
   S.items.splice(srcIdx<tgtIdx?newTgtIdx+1:newTgtIdx,0,moved);
   save();
   render();
+}
+function shiftHour(t,delta){
+  const m=toMin(t);
+  if(m===null)return t;
+  return minHM((m+delta*60+1440)%1440);
+}
+function applyDaylightSaving(targetMode){
+  const currentMode=S.settings.timeMode||'winter';
+  const isTargetSummer=targetMode==='summer';
+  const modeLabel=isTargetSummer?'التوقيت الصيفي (+1 ساعة)':'التوقيت الشتوي (-1 ساعة)';
+  const delta=isTargetSummer?1:-1;
+  const timedItems=S.items.filter(i=>i.start||i.end);
+
+  if(!timedItems.length){
+    S.settings.timeMode=targetMode;
+    save();
+    render();
+    alert('تم ضبط الوضع على '+(isTargetSummer?'التوقيت الصيفي':'التوقيت الشتوي')+'، ولا توجد مهام محددة بساعات حالياً.');
+    return;
+  }
+
+  let confirmMsg='';
+  if(currentMode===targetMode){
+    confirmMsg='التطبيق مضبوط بالفعل على '+(isTargetSummer?'التوقيت الصيفي':'التوقيت الشتوي')+'.\nهل تريد '+(isTargetSummer?'تقديم':'تأخير')+' مواعيد جميع المهام ساعة إضافية على أي حال؟ ('+timedItems.length+' مهمة)';
+  } else {
+    confirmMsg='هل تريد تطبيق '+modeLabel+' على جميع المهام؟\nسيتم تعديل مواعيد '+timedItems.length+' مهمة تلقائياً.';
+  }
+
+  if(!window.confirm(confirmMsg)) return;
+
+  let count=0;
+  S.items.forEach(i=>{
+    let changed=false;
+    if(i.start){ i.start=shiftHour(i.start,delta); changed=true; }
+    if(i.end){ i.end=shiftHour(i.end,delta); changed=true; }
+    if(changed) count++;
+  });
+
+  S.settings.timeMode=targetMode;
+  save();
+  render();
+  setTimeout(()=>{
+    alert('تم بنجاح تعديل مواعيد '+count+' مهمة إلى '+(isTargetSummer?'التوقيت الصيفي (+1 ساعة)':'التوقيت الشتوي (-1 ساعة)')+'!');
+  },100);
 }
 const itemsOn=k=>S.items.filter(i=>runsOn(i,k)).sort(cmpItems);
 const isDone=(k,id)=>!!(S.log[k]&&S.log[k][id]);
@@ -508,17 +625,28 @@ function buildICS(until){
 
 /* ---------- نوافذ التعديل ---------- */
 let sheetEl=null;
-function closeSheet(){if(sheetEl){sheetEl.remove();sheetEl=null;document.body.style.overflow='';}}
+function closeSheet(){
+  if(sheetEl){
+    sheetEl.remove();
+    sheetEl=null;
+    document.body.style.overflow='';
+    try{if(window.history.state&&window.history.state.sheet)window.history.back();}catch(e){}
+  }
+}
 function openSheet(title,body,foot){
-  closeSheet();
+  if(sheetEl){sheetEl.remove();sheetEl=null;}
   const ov=h('div',{class:'overlay',onclick:e=>{if(e.target===ov)closeSheet();}},
     h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':title},
       h('div',{class:'sheet-head'},h('h2',null,title),h('button',{class:'icon-btn','aria-label':'إغلاق',onclick:closeSheet},icon('x'))),
       h('div',{class:'sheet-body'},body),
       h('div',{class:'sheet-foot'},foot)));
   document.body.appendChild(ov);document.body.style.overflow='hidden';sheetEl=ov;
+  try{window.history.pushState({sheet:true},'');}catch(e){}
   const f=ov.querySelector('input,select,textarea');if(f&&!f.value)setTimeout(()=>f.focus(),60);
 }
+window.addEventListener('popstate',()=>{
+  if(sheetEl){sheetEl.remove();sheetEl=null;document.body.style.overflow='';}
+});
 function twoStep(label,confirmLabel,fn){
   let armed=false;
   const b=h('button',{class:'btn',onclick:()=>{
@@ -589,14 +717,23 @@ function viewQuickLists(){
 }
 function confirmAddList(ql){
   const t=todayKey();
+  const delta=(S.settings&&S.settings.timeMode==='summer')?1:0;
   const body=[
-    h('p',{style:'margin:14px 0 6px;font-size:.95rem'},'هتضاف '+ql.items.length+' عناصر من قائمة "'+ql.name+'" على عناصرك الحالية:'),
+    h('p',{style:'margin:14px 0 6px;font-size:.95rem'},'هتضاف '+ql.items.length+' عناصر من قائمة "'+ql.name+'" على عناصرك الحالية'+(delta?' (معدلة للتوقيت الصيفي)':'')+':'),
     h('ul',{style:'margin:0 0 10px;padding-right:18px;font-size:.88rem;color:var(--ink2)'},
-      ql.items.map(i=>h('li',null,i.name+(i.start?' ('+i.start+(i.end?' - '+i.end:'')+')':''))))
+      ql.items.map(i=>{
+        const s=delta&&i.start?shiftHour(i.start,delta):i.start;
+        const e=delta&&i.end?shiftHour(i.end,delta):i.end;
+        return h('li',null,i.name+(s?' ('+s+(e?' - '+e:'')+')':''));
+      }))
   ];
   openSheet('إضافة قائمة: '+ql.name,body,[
     h('button',{class:'btn primary',onclick:()=>{
-      ql.items.forEach(item=>{S.items.push(Object.assign({id:uid(),goal:null,since:t},item));});
+      ql.items.forEach(item=>{
+        const start=delta&&item.start?shiftHour(item.start,delta):item.start;
+        const end=delta&&item.end?shiftHour(item.end,delta):item.end;
+        S.items.push(Object.assign({id:uid(),goal:null,since:t},item,{start,end}));
+      });
       save();closeSheet();UI.tab='today';render();
     }},'أضف الكل'),
     h('button',{class:'btn',onclick:openQuickListsSheet},'رجوع')
@@ -973,6 +1110,7 @@ function viewToday(){
   const free=items.filter(i=>!i.start),timed=items.filter(i=>i.start);
   if(free.length){p.append(h('div',{class:'grp'},'طول اليوم'),h('div',null,free.map(row)));}
   if(timed.length){p.append(h('div',{class:'grp'},'بالساعة'),h('div',null,timed.map(row)));}
+  p.append(h('div',{class:'task-bottom-spacer',style:'height:80px;clear:both','aria-hidden':'true'}));
   return p;
 }
 
@@ -1113,7 +1251,36 @@ function viewSettings(){
           window.open('https://t.me/KhaledAlaa643','_blank','noopener,noreferrer');
         }},'تواصل'))));
 
+  /* --- التوقيت صيفي / شتوي --- */
+  const curTimeMode = (S.settings && S.settings.timeMode) || 'winter';
+  const isSummer = curTimeMode === 'summer';
+  const timeModeCard = h('div',{class:'card'},
+    h('div',{style:'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px'},
+      h('span',{style:'font-weight:700'},'الوضع الحالي:'),
+      h('span',{
+        class:'pill ' + (isSummer ? 'ok' : ''),
+        style:'font-weight:800;font-size:.88rem;padding:4px 12px;'
+      }, isSummer ? '☀️ التوقيت الصيفي' : '❄️ التوقيت الشتوي')
+    ),
+    h('p',{class:'hint',style:'margin:0 0 12px;line-height:1.6'},
+      'بضغطة زر واحدة بيتم تقديم أو تأخير مواعيد كل المهام المحددة بساعات (+1 أو -1 ساعة) تلقائياً، بدل ما تعدل كل مهمة لوحدها.'),
+    h('div',{class:'btnrow'},
+      h('button',{
+        class:'btn' + (isSummer ? ' primary' : ''),
+        style:'flex:1;min-width:140px',
+        onclick:()=>applyDaylightSaving('summer')
+      },'☀️ توقيت صيفي (+1 س)'),
+      h('button',{
+        class:'btn' + (!isSummer ? ' primary' : ''),
+        style:'flex:1;min-width:140px',
+        onclick:()=>applyDaylightSaving('winter')
+      },'❄️ توقيت شتوي (-1 س)')
+    )
+  );
+
   p.append(
+    h('div',{class:'sec'},'التوقيت (صيفي / شتوي)'),
+    timeModeCard,
     h('div',{class:'sec'},'عام'),
     h('div',{class:'card'},field('الأسبوع يبدأ يوم',ws)),
     h('div',{class:'sec'},'النسخة الاحتياطية'),
@@ -1150,10 +1317,9 @@ const TABS=[
 ];
 function render(){
   const y=window.scrollY,app=$('#app');
-  const benefit=getDailyBenefit();
   const kids=[h('div',{class:'top'},h('div',{class:'brand'},'محاسبتي'))];
   if(mode==='memory')kids.push(h('div',{class:'banner',role:'status'},'الحفظ التلقائي مش متاح في المتصفح ده. صدّر نسخة من الإعدادات قبل ما تقفل.'));
-  if(UI.tab==='today'){kids.push(h('div',{class:'benefit-banner'},h('div',{class:'benefit-label'},benefit.label),h('div',{class:'benefit-text'},benefit.text),h('div',{class:'benefit-src'},benefit.src)));}
+  if(UI.tab==='today'){kids.push(renderBenefitBanner());}
   if(UI.tab==='today')kids.push(viewToday());
   else if(UI.tab==='goals')kids.push(viewGoals());
   else if(UI.tab==='week')kids.push(viewWeek());
@@ -1169,6 +1335,17 @@ function render(){
 
 store.get().then(d=>{S=normalize(d);render();
   setInterval(()=>{if(!sheetEl&&UI.tab==='today'&&UI.date===todayKey()&&!document.hidden&&!document.activeElement.matches('input,textarea,select'))render();},60000);
+  setInterval(()=>{if(!sheetEl&&UI.tab==='today'&&!document.hidden)changeBenefit(1);},7000);
+  try{
+    if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App){
+      window.Capacitor.Plugins.App.addListener('backButton',()=>{
+        if(sheetEl){closeSheet();return;}
+        if(tipEl){removeTip();return;}
+        if(UI.tab!=='today'){UI.tab='today';render();return;}
+        window.Capacitor.Plugins.App.exitApp();
+      });
+    }
+  }catch(e){}
 });
 })();
 </script>
