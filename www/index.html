@@ -7,6 +7,52 @@
 <meta name="color-scheme" content="light dark">
 <title>محاسبتي</title>
 <style>
+/* --- benefit banner --- */
+.benefit-banner{margin:8px 16px 0;padding:12px 14px;background:linear-gradient(135deg,var(--pine) 0%,#0f3d31 100%);border-radius:14px;color:var(--pine-ink);font-size:.9rem;line-height:1.6;position:relative;overflow:hidden}
+.benefit-banner::before{content:'';position:absolute;top:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.06)}
+.benefit-banner .benefit-label{font-size:.73rem;font-weight:700;opacity:.75;margin-bottom:4px;letter-spacing:.04em}
+.benefit-banner .benefit-text{font-weight:600}
+.benefit-banner .benefit-src{font-size:.76rem;opacity:.65;margin-top:5px;font-style:italic}
+@media (prefers-color-scheme: dark){.benefit-banner{background:linear-gradient(135deg,#1a5c49 0%,#0b2e23 100%)}}
+/* --- help tooltip --- */
+.f-row{display:flex;align-items:flex-end;gap:6px;margin-top:14px}
+.f-row label.f,.f-row .f-lbl{margin-top:0;flex:1}
+.help-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--pine);color:var(--pine);font-size:.78rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;background:none;margin-bottom:2px}
+.tip-popup{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom));max-width:320px;width:90%;background:var(--ink);color:var(--surface);padding:12px 14px;border-radius:14px;font-size:.88rem;line-height:1.6;z-index:40;animation:fadeIn .2s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.tip-popup .tip-title{font-weight:800;margin-bottom:4px}
+/* --- charts --- */
+.chart-tabs{display:flex;gap:6px;margin:12px 0 6px;flex-wrap:wrap}
+.chart-tab{padding:6px 14px;border-radius:99px;border:1px solid var(--line);font-size:.82rem;font-weight:700;background:var(--surface);color:var(--ink2)}
+.chart-tab.active{background:var(--pine);border-color:var(--pine);color:var(--pine-ink)}
+.chart-bars{display:flex;align-items:flex-end;gap:4px;height:120px;padding:0 2px;margin-top:12px}
+.chart-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:3px;height:100%}
+.chart-bar-wrap{flex:1;display:flex;align-items:flex-end;width:100%}
+.chart-bar{width:100%;border-radius:6px 6px 0 0;background:var(--pine);min-height:3px;transition:height .3s ease}
+.chart-bar.zero{background:var(--soft)}
+.chart-lbl{font-size:.65rem;color:var(--ink2);font-weight:700;text-align:center}
+.chart-pct{font-size:.68rem;color:var(--pine);font-weight:800;text-align:center;height:14px}
+.chart-legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.chart-legend span{font-size:.78rem;color:var(--ink2);display:flex;align-items:center;gap:5px}
+.chart-legend i{display:inline-block;width:11px;height:11px;border-radius:3px}
+/* --- quick lists --- */
+.qlist-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.qlist-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;text-align:right;transition:border-color .15s}
+.qlist-card:active{border-color:var(--pine)}
+.qlist-icon{font-size:1.6rem;margin-bottom:6px}
+.qlist-name{font-weight:800;font-size:.95rem}
+.qlist-count{font-size:.78rem;color:var(--ink2);margin-top:2px}
+/* --- contact --- */
+.contact-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:12px}
+.contact-row{display:flex;align-items:center;gap:12px;padding:6px 0}
+.contact-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.contact-icon.wa{background:#25D366;}
+.contact-icon.tg{background:#229ED9;}
+.contact-info{flex:1}
+.contact-name{font-weight:800;font-size:.95rem}
+.contact-handle{font-size:.82rem;color:var(--ink2)}
+.contact-btn{min-height:38px;padding:6px 14px;border-radius:10px;background:var(--pine);color:var(--pine-ink);border:none;font-weight:700;font-size:.85rem}
+.contact-divider{height:1px;background:var(--line);margin:4px 0}
 :root{
   --bg:#EBF0EE; --surface:#FAFBFA; --ink:#14302A; --ink2:#566D66; --line:#D1DCD8; --soft:#DFE8E5;
   --pine:#1E5B4E; --pine-ink:#FFFFFF; --saffron:#C97F12; --ok:#2C8A6C; --bad:#B4483B;
@@ -109,7 +155,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .wrow .l{display:flex;justify-content:space-between;gap:10px;font-weight:700}
 .wrow .l span:last-child{color:var(--ink2);font-weight:600}
 
-label.f{display:block;margin-top:14px;font-size:.88rem;font-weight:700;color:var(--ink2)}
+label.f,.f-lbl{display:block;margin-top:14px;font-size:.88rem;font-weight:700;color:var(--ink2)}
 .in,select.in,textarea.in{display:block;width:100%;margin-top:5px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:1rem;color:var(--ink)}
 textarea.in{resize:vertical;min-height:64px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -147,6 +193,73 @@ const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء',
 const INIT=['ح','ن','ث','ر','خ','ج','س'];
 const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BYDAY=['SU','MO','TU','WE','TH','FR','SA'];
+
+/* ---------- آيات وأحاديث ---------- */
+const BENEFITS=[
+  {text:'﴿وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا﴾',src:'سورة العنكبوت: 69',label:'آية كريمة'},
+  {text:'«إن الله يحب إذا عمل أحدكم عملاً أن يتقنه»',src:'رواه الطبراني والبيهقي',label:'حديث شريف'},
+  {text:'﴿فَإِذَا فَرَغْتَ فَانصَبْ - وَإِلَى رَبِّكَ فَارْغَب﴾',src:'سورة الشرح: 7-8',label:'آية كريمة'},
+  {text:'«احرص على ما ينفعك، واستعن بالله ولا تعجز»',src:'رواه مسلم',label:'حديث شريف'},
+  {text:'﴿إِنَّ اللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّى يُغَيِّرُوا مَا بِأَنفُسِهِمْ﴾',src:'سورة الرعد: 11',label:'آية كريمة'},
+  {text:'«خير الناس أنفعهم للناس»',src:'رواه الطبراني',label:'حديث شريف'},
+  {text:'﴿وَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَى﴾',src:'سورة النجم: 39',label:'آية كريمة'},
+  {text:'«نعمتان مغبون فيهما كثير من الناس: الصحة والفراغ»',src:'رواه البخاري',label:'حديث شريف'},
+  {text:'﴿وَقُلِ اعْمَلُوا فَسَيَرَى اللَّهُ عَمَلَكُمْ وَرَسُولُهُ وَالْمُؤْمِنُونَ﴾',src:'سورة التوبة: 105',label:'آية كريمة'},
+  {text:'«من سلك طريقاً يلتمس فيه علماً سهّل الله له طريقاً إلى الجنة»',src:'رواه مسلم',label:'حديث شريف'},
+  {text:'﴿يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ﴾',src:'سورة البقرة: 153',label:'آية كريمة'},
+  {text:'«أحب الأعمال إلى الله أدومها وإن قل»',src:'متفق عليه',label:'حديث شريف'},
+];
+function getDailyBenefit(){
+  const d=today();
+  const idx=(d.getFullYear()*366+d.getMonth()*31+d.getDate())%BENEFITS.length;
+  return BENEFITS[idx];
+}
+
+/* ---------- قوائم إسلامية جاهزة ---------- */
+const QUICK_LISTS=[
+  {id:'quran',icon:'📖',name:'القرآن الكريم',items:[
+    {name:'ورد القرآن اليومي',days:[0,1,2,3,4,5,6],start:'07:00',end:'07:45'},
+    {name:'المراجعة اليومية',days:[0,1,2,3,4,5,6],start:'20:00',end:'20:30'},
+    {name:'تلاوة الفجر',days:[0,1,2,3,4,5,6],start:'05:45',end:'06:15'},
+    {name:'حفظ آيات جديدة',days:[0,1,2,3,4,5,6],start:'08:00',end:'08:30'},
+  ]},
+  {id:'salah',icon:'🕌',name:'الصلاة في المسجد',items:[
+    {name:'صلاة الفجر في المسجد',days:[0,1,2,3,4,5,6],start:'05:15',end:'05:40'},
+    {name:'صلاة الظهر في المسجد',days:[0,1,2,3,4,5,6],start:'12:30',end:'13:00'},
+    {name:'صلاة العصر في المسجد',days:[0,1,2,3,4,5,6],start:'15:30',end:'16:00'},
+    {name:'صلاة المغرب في المسجد',days:[0,1,2,3,4,5,6],start:'18:00',end:'18:20'},
+    {name:'صلاة العشاء في المسجد',days:[0,1,2,3,4,5,6],start:'19:30',end:'20:00'},
+  ]},
+  {id:'azkar',icon:'📿',name:'الأذكار',items:[
+    {name:'أذكار الصباح',days:[0,1,2,3,4,5,6],start:'06:00',end:'06:20'},
+    {name:'أذكار المساء',days:[0,1,2,3,4,5,6],start:'16:00',end:'16:20'},
+    {name:'أذكار النوم',days:[0,1,2,3,4,5,6],start:'22:00',end:'22:10'},
+    {name:'الأذكار بعد الصلوات',days:[0,1,2,3,4,5,6]},
+    {name:'100 تسبيحة يومياً',days:[0,1,2,3,4,5,6]},
+  ]},
+  {id:'islamic',icon:'📚',name:'العلوم الشرعية',items:[
+    {name:'قراءة في كتاب شرعي',days:[0,1,2,3,4,5,6],start:'21:00',end:'21:30'},
+    {name:'حضور درس الشيخ',days:[4],start:'20:00',end:'21:30'},
+    {name:'مراجعة محاضرات دينية',days:[5,6],start:'10:00',end:'11:00'},
+    {name:'تعلم مسألة فقهية يومياً',days:[0,1,2,3,4,5,6]},
+    {name:'كتابة ملخص علمي',days:[4],start:'21:30',end:'22:00'},
+  ]},
+  {id:'nawafil',icon:'🌙',name:'النوافل والسنن',items:[
+    {name:'قيام الليل',days:[0,1,2,3,4,5,6],start:'03:30',end:'04:30'},
+    {name:'صلاة الضحى',days:[0,1,2,3,4,5,6],start:'09:00',end:'09:15'},
+    {name:'السنن الرواتب',days:[0,1,2,3,4,5,6]},
+    {name:'صيام الاثنين والخميس',days:[1,4]},
+    {name:'صلاة الجمعة',days:[5],start:'12:00',end:'13:30'},
+  ]},
+  {id:'selfdev',icon:'🌱',name:'تزكية النفس',items:[
+    {name:'مجاهدة النفس على عادة سيئة',days:[0,1,2,3,4,5,6]},
+    {name:'برّ الوالدين (تواصل يومي)',days:[0,1,2,3,4,5,6]},
+    {name:'صلة الرحم (أسبوعياً)',days:[5]},
+    {name:'صدقة يومية ولو قليلة',days:[0,1,2,3,4,5,6]},
+    {name:'مراجعة النية قبل كل عمل',days:[0,1,2,3,4,5,6]},
+  ]},
+];
+
 const $=(s,r)=>(r||document).querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
 const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -173,7 +286,8 @@ const SVG={
   today:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/>',
   goals:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
   week:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
-  more:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'
+  more:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  chart:'<path d="M3 20h18M7 20V10M12 20V4M17 20v-7"/>',
 };
 function icon(n,s){s=s||22;const e=document.createElement('span');e.className='ico';
   e.innerHTML='<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+SVG[n]+'</svg>';return e;}
@@ -223,7 +337,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&S)save();}
 
 /* ---------- الحالة ---------- */
 let S=null;
-const UI={tab:'today',date:todayKey(),anchor:todayKey()};
+const UI={tab:'today',date:todayKey(),anchor:todayKey(),chartRange:'week'};
 const blank=()=>({v:1,items:[],goals:[],log:{},reviews:{},settings:{weekStart:6}});
 function normalize(d){
   const s=Object.assign(blank(),d||{});
@@ -382,7 +496,170 @@ function twoStep(label,confirmLabel,fn){
     else fn();}},label);
   return b;
 }
-const field=(label,ctrl)=>h('label',{class:'f'},label,ctrl);
+const field=(label,ctrl,helpText)=>{
+  if(!helpText)return h('label',{class:'f'},label,ctrl);
+  const wrap=h('div',{class:'f-row'});
+  const lbl=h('label',{class:'f',style:'margin-top:0;flex:1'},label,ctrl);
+  wrap.appendChild(lbl);wrap.appendChild(helpBtn(helpText));
+  return wrap;
+};
+
+/* ---------- زر المساعدة ---------- */
+let tipEl=null;
+function removeTip(){if(tipEl){tipEl.remove();tipEl=null;}}
+function helpBtn(text){
+  const b=h('button',{class:'help-btn','aria-label':'مساعدة',type:'button',onclick:(e)=>{
+    e.stopPropagation();
+    if(tipEl){removeTip();return;}
+    const parts=text.split('|');
+    tipEl=h('div',{class:'tip-popup'},
+      parts[0]?h('div',{class:'tip-title'},parts[0]):null,
+      parts[1]?h('div',null,parts[1]):null);
+    document.body.appendChild(tipEl);
+    setTimeout(()=>document.addEventListener('click',removeTip,{once:true}),50);
+  }},'?');
+  return b;
+}
+
+/* ---------- قوائم إسلامية ---------- */
+function viewQuickLists(){
+  const p=h('div',{class:'page'});
+  p.append(h('div',{class:'sec'},'قوائم إسلامية جاهزة'));
+  p.append(h('p',{class:'hint',style:'margin:10px 4px 0'},'اختار قائمة وهتتضاف لعناصرك. تقدر تعدّل عليها بعد كده.'));
+  const grid=h('div',{class:'qlist-grid'});
+  QUICK_LISTS.forEach(ql=>{
+    const card=h('div',{class:'qlist-card',role:'button',tabindex:'0',
+      onclick:()=>confirmAddList(ql),
+      onkeydown:e=>{if(e.key==='Enter')confirmAddList(ql);}},
+      h('div',{class:'qlist-icon'},ql.icon),
+      h('div',{class:'qlist-name'},ql.name),
+      h('div',{class:'qlist-count'},ql.items.length+' عناصر'));
+    grid.appendChild(card);
+  });
+  p.append(grid);
+  return p;
+}
+function confirmAddList(ql){
+  const t=todayKey();
+  const body=[
+    h('p',{style:'margin:14px 0 6px;font-size:.95rem'},'هتضاف '+ql.items.length+' عناصر من قائمة "'+ql.name+'" على عناصرك الحالية.'),
+    h('ul',{style:'margin:0 0 10px;padding-right:18px;font-size:.88rem;color:var(--ink2)'},
+      ql.items.map(i=>h('li',null,i.name+(i.start?' ('+i.start+(i.end?' - '+i.end:'')+')':''))))
+  ];
+  openSheet('إضافة قائمة: '+ql.name,body,[
+    h('button',{class:'btn primary',onclick:()=>{
+      ql.items.forEach(item=>{S.items.push(Object.assign({id:uid(),goal:null,since:t},item));});
+      save();closeSheet();UI.tab='today';render();
+    }},'أضف الكل'),
+    h('button',{class:'btn',onclick:closeSheet},'إلغاء')
+  ]);
+}
+
+/* ---------- إحصاء ---------- */
+function getDayStats(k){
+  const items=itemsOn(k);
+  if(!items.length)return null;
+  const done=items.filter(i=>isDone(k,i.id)).length;
+  return {done,total:items.length,pct:Math.round(done/items.length*100)};
+}
+function viewCharts(){
+  const p=h('div',{class:'page'});
+  p.append(h('div',{class:'sec'},'إحصائياتك'));
+  const ranges=[['week','آخر أسبوع'],['month','آخر شهر'],['3months','آخر 3 أشهر']];
+  const tabsEl=h('div',{class:'chart-tabs'});
+  ranges.forEach(([id,label])=>{
+    tabsEl.appendChild(h('button',{class:'chart-tab'+(UI.chartRange===id?' active':''),onclick:()=>{UI.chartRange=id;render();}},label));
+  });
+  p.append(tabsEl);
+  let days=[];
+  const t=today();
+  if(UI.chartRange==='week'){for(let i=6;i>=0;i--)days.push(key(addDays(t,-i)));}
+  else if(UI.chartRange==='month'){for(let i=29;i>=0;i--)days.push(key(addDays(t,-i)));}
+  else{for(let i=89;i>=0;i--)days.push(key(addDays(t,-i)));}
+  const stats=days.map(k=>({k,s:getDayStats(k)}));
+  const valid=stats.filter(x=>x.s);
+  const avgPct=valid.length?Math.round(valid.reduce((s,x)=>s+x.s.pct,0)/valid.length):0;
+  const best=valid.reduce((b,x)=>(!b||x.s.pct>b.s.pct)?x:b,null);
+  const streak7=stats.slice(-7).filter(x=>x.s&&x.s.pct===100).length;
+  const summRow=h('div',{style:'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px'});
+  [[avgPct+'%','متوسط الإنجاز'],[best?best.s.pct+'%':'–','أفضل يوم'],[streak7+'/7','أيام مكتملة']].forEach(([v,l])=>{
+    summRow.appendChild(h('div',{class:'card',style:'text-align:center;padding:10px 8px'},
+      h('div',{style:'font-size:1.4rem;font-weight:800;color:var(--pine)'},v),
+      h('div',{style:'font-size:.74rem;color:var(--ink2);margin-top:2px'},l)));
+  });
+  p.append(summRow);
+  const barsEl=h('div',{class:'chart-bars'});
+  if(UI.chartRange!=='week'){
+    const weeks=[];
+    for(let i=0;i<days.length;i+=7){
+      const slice=days.slice(i,i+7);
+      const ss=slice.map(k=>getDayStats(k)).filter(Boolean);
+      const avg=ss.length?Math.round(ss.reduce((s,x)=>s+x.pct,0)/ss.length):0;
+      const d=parse(slice[0]);
+      weeks.push({label:d.getDate()+'/'+pad(d.getMonth()+1),pct:avg,hasData:ss.length>0});
+    }
+    const maxPct=Math.max(...weeks.map(w=>w.pct),1);
+    weeks.forEach(w=>{
+      const col=h('div',{class:'chart-col'});
+      col.appendChild(h('div',{class:'chart-pct'},w.hasData?w.pct+'%':''));
+      const bw=h('div',{class:'chart-bar-wrap'});
+      const bar=h('div',{class:'chart-bar'+(w.pct===0?' zero':'')});
+      bar.style.height=(w.hasData?Math.max(4,Math.round(w.pct/maxPct*100)):4)+'%';
+      bw.appendChild(bar);col.appendChild(bw);
+      col.appendChild(h('div',{class:'chart-lbl'},w.label));
+      barsEl.appendChild(col);
+    });
+  }else{
+    stats.forEach(({k,s})=>{
+      const d=parse(k);const isT=k===todayKey();
+      const col=h('div',{class:'chart-col'});
+      col.appendChild(h('div',{class:'chart-pct'},s?s.pct+'%':''));
+      const bw=h('div',{class:'chart-bar-wrap'});
+      const bar=h('div',{class:'chart-bar'+((!s||s.pct===0)?' zero':'')});
+      if(isT)bar.style.background='var(--saffron)';
+      bar.style.height=(s?Math.max(4,s.pct):4)+'%';
+      bw.appendChild(bar);col.appendChild(bw);
+      col.appendChild(h('div',{class:'chart-lbl'},INIT[d.getDay()]));
+      barsEl.appendChild(col);
+    });
+  }
+  p.append(barsEl);
+  const legend=h('div',{class:'chart-legend'});
+  legend.appendChild(h('span',null,h('i',{style:'background:var(--pine)'}),h('span',null,'الإنجاز')));
+  legend.appendChild(h('span',null,h('i',{style:'background:var(--saffron)'}),h('span',null,'اليوم')));
+  legend.appendChild(h('span',null,h('i',{style:'background:var(--soft)'}),h('span',null,'بدون بيانات')));
+  p.append(legend);
+  if(valid.length){
+    p.append(h('div',{class:'sec'},'أكثر العناصر التزاماً'));
+    const iStats={};
+    days.forEach(k=>{
+      itemsOn(k).forEach(i=>{
+        if(!iStats[i.id])iStats[i.id]={name:i.name,done:0,due:0};
+        iStats[i.id].due++;
+        if(isDone(k,i.id))iStats[i.id].done++;
+      });
+    });
+    const sorted=Object.values(iStats).filter(x=>x.due>=3).sort((a,b)=>(b.done/b.due)-(a.done/a.due)).slice(0,5);
+    if(sorted.length){
+      const card=h('div',{class:'card'});
+      sorted.forEach((x,idx)=>{
+        const pct=Math.round(x.done/x.due*100);
+        const row=h('div',{style:'display:flex;align-items:center;gap:10px;'+(idx?'margin-top:10px;padding-top:10px;border-top:1px solid var(--line)':'')});
+        row.appendChild(h('span',{style:'font-size:1.1rem;min-width:26px;text-align:center'},['🥇','🥈','🥉','4️⃣','5️⃣'][idx]));
+        const info=h('div',{style:'flex:1;min-width:0'});
+        info.appendChild(h('div',{style:'font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'},x.name));
+        const barEl=h('div',{class:'bar',style:'margin:4px 0 0;height:7px'});
+        barEl.appendChild(h('i',{style:'width:'+pct+'%'}));
+        info.appendChild(barEl);
+        row.appendChild(info);
+        row.appendChild(h('span',{style:'font-weight:800;color:var(--pine);font-size:.9rem;flex-shrink:0'},pct+'%'));
+        card.appendChild(row);
+      });
+      p.append(card);
+    }
+  }
+  return p;
+}
 
 function itemEditor(it){
   const isNew=!it;
@@ -418,13 +695,13 @@ function itemEditor(it){
     foot.push(twoStep('حذف','اضغط تاني للحذف',()=>{deleteItem(it.id);save();closeSheet();render();}));
   }
   openSheet(isNew?'عنصر جديد':'تعديل العنصر',[
-    field('الاسم',name),
+    field('الاسم',name,'الاسم|اكتب اسم العادة أو المهمة. مثال: ورد القرآن أو صلاة الفجر في المسجد.'),
     h('div',{class:'f',style:'display:flex;justify-content:space-between;align-items:center'},h('span',null,'الأيام'),all),
     h('div',{class:'days'},order),
-    h('div',{class:'two'},field('من',st),field('إلى',en)),
+    h('div',{class:'two'},field('من',st,'وقت البداية|اكتب وقت البداية. سيب فاضي لو مش مربوط بساعة.'),field('إلى',en,'وقت النهاية|اكتب وقت النهاية. اختياري.')),
     h('p',{class:'hint'},'سيب الوقت فاضي لو العنصر مش مربوط بساعة معينة.'),
-    field('يزوّد هدف لما تعلّم عليه',gs),
-    field('يبدأ من تاريخ',since),
+    field('يزوّد هدف لما تعلّم عليه',gs,'ربط بهدف|لو العنصر ده جزء من هدف أكبر اربطه بالهدف وهيتحسب تلقائياً.'),
+    field('يبدأ من تاريخ',since,'تاريخ البداية|مفيدة لو حابب تبدأ العنصر من تاريخ مستقبلي.'),
     err
   ],foot);
 }
@@ -452,13 +729,13 @@ function goalEditor(g){
     save();closeSheet();render();}},'حفظ')];
   if(!isNew)foot.push(twoStep('حذف','اضغط تاني للحذف',()=>{deleteGoal(g.id);save();closeSheet();render();}));
   openSheet(isNew?'هدف جديد':'تعديل الهدف',[
-    field('الاسم',name),
-    h('div',{class:'two'},field('الوحدة',unit),field('الرقم المستهدف',target)),
-    field('الرقم الحالي',current),
-    h('div',{class:'two'},field('تاريخ البداية',start),field('الموعد النهائي',dl)),
-    field('هدف أسبوعي (اختياري)',weekly),
-    field('المرحلة (اختياري)',group),
-    field('المخرج النهائي (اختياري)',out),
+    field('الاسم',name,'اسم الهدف|مثال: حفظ جزء عم أو إتمام دورة البرمجة. اجعله واضحاً ومحفزاً.'),
+    h('div',{class:'two'},field('الوحدة',unit,'الوحدة|وحدة قياس الهدف. مثال: صفحة، درس، ساعة.'),field('الرقم المستهدف',target,'الرقم المستهدف|كم عدد الوحدات التي تريد إنجازها؟')),
+    field('الرقم الحالي',current,'الرقم الحالي|لو كنت بدأت قبل كده اكتب الرقم اللي وصلته.'),
+    h('div',{class:'two'},field('تاريخ البداية',start,'تاريخ البداية|امتى بدأت أو هتبدأ؟'),field('الموعد النهائي',dl,'الموعد النهائي|امتى لازم يخلص الهدف؟ اختياري.')),
+    field('هدف أسبوعي (اختياري)',weekly,'الهدف الأسبوعي|كم وحدة تريد إنجازها كل أسبوع؟'),
+    field('المرحلة (اختياري)',group,'المرحلة|قسّم أهدافك لمراحل. مثال: المرحلة الأولى.'),
+    field('المخرج النهائي (اختياري)',out,'المخرج النهائي|إيه اللي هيبقى في إيدك لما تخلص الهدف ده؟'),
     err
   ],foot);
 }
@@ -613,6 +890,24 @@ function viewSettings(){
       S=normalize(d);save();msg.textContent='تم الاستيراد.';render();
     });}});
   const msg=h('div',{class:'hint',role:'status'});
+  /* --- تواصل --- */
+  p.append(
+    h('div',{class:'sec'},'تواصل مع المطور'),
+    h('div',{class:'contact-card'},
+      h('div',{class:'contact-row'},
+        h('div',{class:'contact-icon wa'},'💬'),
+        h('div',{class:'contact-info'},
+          h('div',{class:'contact-name'},'خالد علاء'),
+          h('div',{class:'contact-handle'},'واتساب')),
+        h('button',{class:'contact-btn',onclick:()=>window.open('https://wa.me/?text=السلام عليكم خالد، تواصلت معك من تطبيق محاسبتي','_blank')},'تواصل')),
+      h('div',{class:'contact-divider'}),
+      h('div',{class:'contact-row'},
+        h('div',{class:'contact-icon tg'},'✈️'),
+        h('div',{class:'contact-info'},
+          h('div',{class:'contact-name'},'خالد علاء'),
+          h('div',{class:'contact-handle'},'@KhaledAlaa643')),
+        h('button',{class:'contact-btn',onclick:()=>window.open('https://t.me/KhaledAlaa643','_blank')},'تواصل'))));
+
   p.append(
     h('div',{class:'sec'},'عام'),
     h('div',{class:'card'},field('الأسبوع يبدأ يوم',ws)),
@@ -640,15 +935,27 @@ function viewSettings(){
 }
 
 /* ---------- الهيكل ---------- */
-const TABS=[['today','اليوم','today'],['goals','الأهداف','goals'],['week','الأسبوع','week'],['more','الإعدادات','more']];
+const TABS=[
+  ['today','اليوم','today'],
+  ['goals','الأهداف','goals'],
+  ['week','الأسبوع','week'],
+  ['charts','الإحصاء','chart'],
+  ['more','الإعدادات','more']
+];
 function render(){
   const y=window.scrollY,app=$('#app');
+  const benefit=getDailyBenefit();
   const kids=[h('div',{class:'top'},h('div',{class:'brand'},'محاسبتي'))];
   if(mode==='memory')kids.push(h('div',{class:'banner',role:'status'},'الحفظ التلقائي مش متاح في المتصفح ده. صدّر نسخة من الإعدادات قبل ما تقفل.'));
-  kids.push(UI.tab==='today'?viewToday():UI.tab==='goals'?viewGoals():UI.tab==='week'?viewWeek():viewSettings());
+  if(UI.tab==='today'){kids.push(h('div',{class:'benefit-banner'},h('div',{class:'benefit-label'},benefit.label),h('div',{class:'benefit-text'},benefit.text),h('div',{class:'benefit-src'},benefit.src)));}
+  if(UI.tab==='today')kids.push(viewToday());
+  else if(UI.tab==='goals')kids.push(viewGoals());
+  else if(UI.tab==='week')kids.push(viewWeek());
+  else if(UI.tab==='charts')kids.push(viewCharts());
+  else kids.push(viewSettings());
   if(UI.tab==='today'||UI.tab==='goals')
     kids.push(h('button',{class:'fab','aria-label':UI.tab==='today'?'عنصر جديد':'هدف جديد',onclick:()=>UI.tab==='today'?itemEditor(null):goalEditor(null)},icon('plus',26)));
-  kids.push(h('nav',{class:'tabs','aria-label':'التنقل'},TABS.map(t=>h('button',{class:'tab','aria-current':UI.tab===t[0]?'page':null,onclick:()=>{UI.tab=t[0];closeSheet();render();window.scrollTo(0,0);}},icon(t[2],24),t[1]))));
+  kids.push(h('nav',{class:'tabs','aria-label':'التنقل'},TABS.map(t=>h('button',{class:'tab','aria-current':UI.tab===t[0]?'page':null,onclick:()=>{UI.tab=t[0];closeSheet();removeTip();render();window.scrollTo(0,0);}},icon(t[2],24),t[1]))));
   while(app.firstChild)app.removeChild(app.firstChild);
   kids.forEach(k=>app.appendChild(k));
   window.scrollTo(0,y);
