@@ -1662,9 +1662,15 @@
         const mIdx = Math.max(0, Math.min(11, hm - 1));
         return { day: hd, month: mIdx + 1, monthName: HIJRI_MONTHS[mIdx], year: hy };
       }
-      function getHijri(date) {
-        const d = typeof date === 'string' ? parse(date) : date;
+      function getHijri(date, customAdjust) {
+        let d = typeof date === 'string' ? parse(date) : date;
         if (!d || isNaN(d.getTime())) return null;
+        const adj = typeof customAdjust === 'number'
+          ? customAdjust
+          : ((typeof S !== 'undefined' && S && S.settings && typeof S.settings.hijriAdjust === 'number') ? S.settings.hijriAdjust : 0);
+        if (adj !== 0) {
+          d = addDays(d, adj);
+        }
         if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
           const cals = ['en-u-ca-islamic-umalqura-nu-latn', 'en-u-ca-islamic-nu-latn'];
           for (let i = 0; i < cals.length; i++) {
@@ -1732,6 +1738,9 @@
         trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>',
         grip: '<circle cx="9" cy="5" r="1.5" fill="currentColor"/><circle cx="15" cy="5" r="1.5" fill="currentColor"/><circle cx="9" cy="12" r="1.5" fill="currentColor"/><circle cx="15" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="19" r="1.5" fill="currentColor"/><circle cx="15" cy="19" r="1.5" fill="currentColor"/>',
         calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+        download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+        refresh: '<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+        share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
       };
       function icon(n, s) {
         s = s || 22; const e = document.createElement('span'); e.className = 'ico';
@@ -1801,10 +1810,196 @@
       /* ---------- الحالة ---------- */
       let S = null;
       const UI = { tab: 'today', date: todayKey(), anchor: todayKey(), chartRange: 'week', chartTarget: 'all', chartCustomIds: [], chartCustomFrom: key(addDays(today(), -30)), chartCustomTo: todayKey() };
-      const blank = () => ({ v: 1, items: [], goals: [], log: {}, reviews: {}, settings: { weekStart: 6, timeMode: 'winter' } });
+
+      /* ---------- معلومات التطبيق والتحديثات ---------- */
+      const APP_INFO = {
+        name: 'محاسبتي',
+        version: '1.1.0',
+        build: 1,
+        repo: 'KhaledAlaa643/Muhasabati',
+        directApkUrl: 'https://github.com/KhaledAlaa643/Muhasabati/releases/latest/download/Muhasabati.apk',
+        releasesUrl: 'https://github.com/KhaledAlaa643/Muhasabati/releases/latest'
+      };
+
+      let updateState = {
+        checking: false,
+        available: false,
+        latestTag: '',
+        latestBuild: 0,
+        releaseNotes: '',
+        downloadUrl: APP_INFO.directApkUrl,
+        dismissed: false,
+        lastChecked: 0,
+        error: null
+      };
+
+      function openExternalUrl(url) {
+        if (!url) return;
+        try {
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => a.remove(), 100);
+        } catch (e) {
+          window.location.href = url;
+        }
+      }
+
+      function parseBuildFromTag(tag) {
+        if (!tag) return 0;
+        const m = String(tag).match(/\d+/g);
+        return m ? parseInt(m.join(''), 10) : 0;
+      }
+
+      function checkForUpdates(silent) {
+        if (updateState.checking) return Promise.resolve();
+        updateState.checking = true;
+        updateState.error = null;
+        if (!silent) render();
+
+        const apiUrl = 'https://api.github.com/repos/' + APP_INFO.repo + '/releases/latest';
+        return fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } })
+          .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .then(data => {
+            updateState.checking = false;
+            updateState.lastChecked = Date.now();
+            const tag = data.tag_name || '';
+            const latestBuild = parseBuildFromTag(tag);
+            const currentBuild = APP_INFO.build || 0;
+
+            let apkDownload = APP_INFO.directApkUrl;
+            if (Array.isArray(data.assets)) {
+              const apkAsset = data.assets.find(a => a.name && a.name.toLowerCase().endsWith('.apk'));
+              if (apkAsset && apkAsset.browser_download_url) {
+                apkDownload = apkAsset.browser_download_url;
+              }
+            }
+
+            if (latestBuild > currentBuild) {
+              updateState.available = true;
+              updateState.latestTag = tag;
+              updateState.latestBuild = latestBuild;
+              updateState.releaseNotes = data.body || '';
+              updateState.downloadUrl = apkDownload;
+              if (!silent) {
+                openUpdateSheet(data, apkDownload);
+              }
+            } else {
+              updateState.available = false;
+              if (!silent) {
+                alert('تطبيقك محدث بالفعل! أنت تستخدم أحدث إصدار (' + (APP_INFO.build ? ('v' + APP_INFO.build) : APP_INFO.version) + ').');
+              }
+            }
+            render();
+          })
+          .catch(err => {
+            updateState.checking = false;
+            updateState.error = err.message || 'فشل الاتصال';
+            if (!silent) {
+              alert('تعذر التحقق من التحديثات تلقائياً. يمكنك تنزيل أحدث ملف APK مباشرة عبر زر التنزيل المباشر.');
+              render();
+            }
+          });
+      }
+
+      function openUpdateSheet(releaseData, apkDownload) {
+        const tag = (releaseData && releaseData.tag_name) || ('v' + updateState.latestBuild);
+        const body = [
+          h('div', { style: 'text-align:center;padding:8px 0 12px' },
+            h('div', { style: 'font-size:2.6rem;margin-bottom:6px' }, '🎉'),
+            h('h3', { style: 'margin:0 0 6px;color:var(--pine)' }, 'يتوفر إصدار جديد من تطبيق محاسبتي!'),
+            h('span', { class: 'pill ok', style: 'font-weight:700;margin-bottom:12px;display:inline-block' }, tag),
+            h('p', { class: 'hint', style: 'margin:0 0 12px;line-height:1.6' },
+              'تم نشر تحديث جديد للتطبيق. اضغط على زر التحديث لتنزيل ملف APK الجديد وتثبيته مباشرة فوق نسختك الحالية دون فقد أي بيانات.')),
+          releaseData && releaseData.body ? h('div', {
+            style: 'background:var(--soft);border-radius:var(--rad);padding:10px 12px;font-size:.85rem;line-height:1.6;margin-bottom:12px;max-height:130px;overflow-y:auto;white-space:pre-wrap'
+          }, releaseData.body) : null
+        ];
+
+        const foot = [
+          h('button', {
+            class: 'btn primary',
+            style: 'flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px',
+            onclick: () => {
+              closeSheet();
+              openExternalUrl(apkDownload || APP_INFO.directApkUrl);
+            }
+          }, icon('download', 18), 'تحديث التطبيق الآن (تنزيل APK)'),
+          h('button', { class: 'btn', onclick: closeSheet }, 'لاحقاً')
+        ];
+
+        openSheet('تحديث جديد متاح', body, foot);
+      }
+
+      function shareAppLink() {
+        const text = 'حمّل تطبيق محاسبتي لمتابعة العادات والأهداف اليومية والعبادات:\n' + APP_INFO.directApkUrl;
+        const cap = window.Capacitor, P = cap && cap.Plugins;
+        if (cap && cap.isNativePlatform && cap.isNativePlatform() && P && P.Share) {
+          P.Share.share({
+            title: 'تطبيق محاسبتي',
+            text: text,
+            url: APP_INFO.directApkUrl,
+            dialogTitle: 'مشاركة تطبيق محاسبتي'
+          }).catch(() => fallbackCopy(APP_INFO.directApkUrl));
+        } else if (navigator.share) {
+          navigator.share({ title: 'تطبيق محاسبتي', text: text, url: APP_INFO.directApkUrl })
+            .catch(() => fallbackCopy(APP_INFO.directApkUrl));
+        } else {
+          fallbackCopy(APP_INFO.directApkUrl);
+        }
+      }
+
+      function fallbackCopy(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => alert('تم نسخ رابط تحميل التطبيق إلى الحافظة بنجاح!'));
+        } else {
+          prompt('انسخ رابط تحميل التطبيق لمشاركته:', text);
+        }
+      }
+
+      function renderUpdateBanner() {
+        const b = h('div', {
+          class: 'banner',
+          style: 'background:var(--pine);color:var(--pine-ink);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.88rem;cursor:pointer',
+          onclick: () => checkForUpdates(false)
+        },
+          h('div', { style: 'display:flex;align-items:center;gap:8px' },
+            h('span', { style: 'font-size:1.15rem' }, '🎉'),
+            h('span', { style: 'font-weight:700' }, 'يتوفر تحديث جديد للمحاسبة (' + (updateState.latestTag || 'جديد') + ')')
+          ),
+          h('div', { style: 'display:flex;align-items:center;gap:6px' },
+            h('button', {
+              class: 'btn small',
+              style: 'background:white;color:var(--pine);border:none;font-weight:800;padding:4px 10px;border-radius:16px',
+              onclick: (e) => {
+                e.stopPropagation();
+                openExternalUrl(updateState.downloadUrl || APP_INFO.directApkUrl);
+              }
+            }, 'تحديث الآن 📥'),
+            h('button', {
+              class: 'icon-btn',
+              style: 'color:inherit;width:28px;height:28px',
+              'aria-label': 'إغلاق',
+              onclick: (e) => {
+                e.stopPropagation();
+                updateState.dismissed = true;
+                render();
+              }
+            }, icon('x', 16))
+          )
+        );
+        return b;
+      }
+      const blank = () => ({ v: 1, items: [], goals: [], log: {}, reviews: {}, settings: { weekStart: 6, timeMode: 'winter', hijriAdjust: 0 } });
       function normalize(d) {
         const s = Object.assign(blank(), d || {});
-        s.settings = Object.assign({ weekStart: 6, timeMode: 'winter' }, s.settings || {});
+        s.settings = Object.assign({ weekStart: 6, timeMode: 'winter', hijriAdjust: 0 }, s.settings || {});
         s.items = (s.items || []).map(i => Object.assign({ id: uid(), name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: null, since: '' }, i));
         s.goals = (s.goals || []).map(g => Object.assign({ id: uid(), name: '', unit: '', target: 0, start: todayKey(), deadline: '', weekly: 0, group: '', outcome: '', entries: [] }, g));
         s.log = s.log || {}; s.reviews = s.reviews || {};
@@ -3323,7 +3518,107 @@
           )
         );
 
+        /* --- ضبط التاريخ الهجري --- */
+        const curAdj = (S.settings && typeof S.settings.hijriAdjust === 'number') ? S.settings.hijriAdjust : 0;
+        const setAdj = (val) => {
+          S.settings.hijriAdjust = Math.max(-5, Math.min(5, val));
+          save();
+          render();
+        };
+
+        const minusBtn = h('button', {
+          type: 'button',
+          class: 'step',
+          'aria-label': 'تأخير يوم هجري',
+          title: 'تأخير يوم (-1)',
+          onclick: () => setAdj(curAdj - 1)
+        }, icon('minus', 18));
+
+        const plusBtn = h('button', {
+          type: 'button',
+          class: 'step add',
+          'aria-label': 'تقديم يوم هجري',
+          title: 'تقديم يوم (+1)',
+          onclick: () => setAdj(curAdj + 1)
+        }, icon('plus', 18));
+
+        const adjBadge = h('div', {
+          style: 'min-width:140px;text-align:center'
+        },
+          h('div', {
+            class: 'pill ' + (curAdj !== 0 ? 'ok' : ''),
+            style: 'font-weight:800;font-size:1rem;padding:6px 16px;display:inline-block'
+          }, curAdj === 0 ? 'بدون تعديل (0)' : (curAdj > 0 ? ('+' + curAdj + (curAdj === 1 ? ' يوم' : ' أيام')) : (curAdj + (curAdj === -1 ? ' يوم' : ' أيام'))))
+        );
+
+        const resetBtn = curAdj !== 0 ? h('button', {
+          type: 'button',
+          class: 'btn small',
+          style: 'color:var(--pine);font-weight:700',
+          onclick: () => setAdj(0)
+        }, '🔄 إعادة للتلقائي (0)') : null;
+
+        const hijriRow = h('div', { style: 'display:flex;align-items:center;justify-content:center;gap:16px;margin:12px 0 10px' },
+          minusBtn,
+          adjBadge,
+          plusBtn
+        );
+
+        const hijriPreview = h('div', {
+          style: 'padding:10px 14px;background:var(--soft);border-radius:var(--rad);font-weight:700;color:var(--pine);text-align:center;font-size:.95rem'
+        }, 'تاريخ اليوم بعد الضبط: ' + fmtHijri(todayKey(), true));
+
+        const hijriCard = h('div', { class: 'card' },
+          h('p', { class: 'hint', style: 'margin:0 0 10px;line-height:1.6' },
+            'إذا اختلف استطلاع الهلال أو ثبوت رؤية الشهر في بلدك عن التقويم المحسوب، يمكنك تقديم أو تأخير التاريخ الهجري يوماً أو أكثر، وسيتم تطبيق التعديل على الفور في كل صفحات التطبيق:'),
+          hijriRow,
+          resetBtn ? h('div', { style: 'display:flex;justify-content:center;margin-bottom:12px' }, resetBtn) : null,
+          hijriPreview
+        );
+
+        /* --- تحديثات التطبيق --- */
+        const curBuildTxt = APP_INFO.build ? ('v' + APP_INFO.build) : APP_INFO.version;
+        const updateCard = h('div', { class: 'card' },
+          h('div', { style: 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px' },
+            h('div', null,
+              h('div', { style: 'font-weight:800;font-size:1rem' }, 'تطبيق محاسبتي'),
+              h('div', { style: 'font-size:.8rem;color:var(--ink2);margin-top:2px' }, 'الإصدار المثبت: ' + curBuildTxt)
+            ),
+            h('span', {
+              class: 'pill ' + (updateState.available ? 'bad' : 'ok'),
+              style: 'font-weight:700'
+            }, updateState.available ? '🔔 يوجد تحديث' : '✅ أحدث إصدار')
+          ),
+          h('p', { class: 'hint', style: 'margin:0 0 12px;line-height:1.6' },
+            'كل ما ينزل تحديث جديد هيوصلك تنبيه داخل التطبيق بضغطة زر لتنزيله وتثبيته فوق نسختك الحالية دون أي فقد في بياناتك.'),
+          h('div', { class: 'btnrow' },
+            h('button', {
+              class: 'btn primary',
+              style: 'flex:1;min-width:140px;display:inline-flex;align-items:center;justify-content:center;gap:6px',
+              disabled: updateState.checking,
+              onclick: () => checkForUpdates(false)
+            }, icon('refresh', 16), updateState.checking ? 'جاري الفحص...' : 'التحقق من وجود تحديث'),
+            h('button', {
+              class: 'btn',
+              style: 'flex:1;min-width:140px;display:inline-flex;align-items:center;justify-content:center;gap:6px',
+              onclick: () => openExternalUrl(APP_INFO.directApkUrl)
+            }, icon('download', 16), 'تنزيل أحدث ملف APK')
+          ),
+          h('div', { style: 'margin-top:10px;display:flex;justify-content:center' },
+            h('button', {
+              type: 'button',
+              class: 'link',
+              style: 'font-size:.85rem;color:var(--pine);font-weight:700;display:inline-flex;align-items:center;gap:4px',
+              onclick: () => shareAppLink()
+            }, icon('share', 14), 'مشاركة رابط تحميل التطبيق مع الأصدقاء')
+          )
+        );
+
         p.append(
+          h('div', { class: 'sec' }, 'تحديثات التطبيق'),
+          updateCard,
+          h('div', { class: 'sec' }, 'التقويم الهجري'),
+          hijriCard,
           h('div', { class: 'sec' }, 'التوقيت (صيفي / شتوي)'),
           timeModeCard,
           h('div', { class: 'sec' }, 'عام'),
@@ -3366,6 +3661,9 @@
         const y = window.scrollY, app = $('#app');
         const kids = [h('div', { class: 'top' }, h('div', { class: 'brand' }, 'محاسبتي'))];
         if (mode === 'memory') kids.push(h('div', { class: 'banner', role: 'status' }, 'الحفظ التلقائي مش متاح في المتصفح ده. صدّر نسخة من الإعدادات قبل ما تقفل.'));
+        if (updateState.available && !updateState.dismissed) {
+          kids.push(renderUpdateBanner());
+        }
         if (UI.tab === 'today') { kids.push(renderBenefitBanner()); }
         if (UI.tab === 'today') kids.push(viewToday());
         else if (UI.tab === 'goals') kids.push(viewGoals());
@@ -3393,6 +3691,7 @@
         S = normalize(d); render();
         setInterval(() => { if (!sheetEl && UI.tab === 'today' && UI.date === todayKey() && !document.hidden && !isEditingInput()) render(); }, 60000);
         setInterval(() => { if (!sheetEl && UI.tab === 'today' && !document.hidden) changeBenefit(1); }, 7000);
+        setTimeout(() => checkForUpdates(true), 2500);
         try {
           if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
             window.Capacitor.Plugins.App.addListener('backButton', () => {

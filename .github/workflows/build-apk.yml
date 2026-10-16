@@ -1,9 +1,12 @@
-name: Build APK
+name: Build and Release APK
 
 on:
   workflow_dispatch:
   push:
     branches: [main, master]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -24,6 +27,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Inject run number into web code
+        run: |
+          sed -i -E "s/build: [0-9]+/build: ${{ github.run_number }}/" www/index.html
+
       - name: Create Android project
         run: |
           npx cap add android
@@ -43,8 +50,29 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Prepare APK for Release
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Muhasabati.apk
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: muhasabati-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: Muhasabati.apk
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "محاسبتي - إصدار جديد (v${{ github.run_number }})"
+          body: |
+            تحديث جديد لتطبيق **محاسبتي** (الإصدار v${{ github.run_number }}).
+            
+            📥 **رابط التحميل المباشر للـ APK:**
+            [اضغط هنا لتحميل Muhasabati.apk مباشرة](https://github.com/KhaledAlaa643/Muhasabati/releases/latest/download/Muhasabati.apk)
+            
+            يمكنك تثبيت هذا الإصدار مباشرة فوق تطبيقك الحالي دون فقد بياناتك السابقة.
+          files: Muhasabati.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
