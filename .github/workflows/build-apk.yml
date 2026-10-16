@@ -44,23 +44,7 @@ jobs:
           mkdir -p ~/.android
           cp debug.keystore ~/.android/debug.keystore
           cp debug.keystore android/app/debug.keystore
-          node -e "
-            const fs = require('fs');
-            let content = fs.readFileSync('android/app/build.gradle', 'utf8');
-            const signingBlock = \`
-    signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-    }
-\`;
-            content = content.replace(/android\s*\{/, 'android {' + signingBlock);
-            content = content.replace(/buildTypes\s*\{/, 'buildTypes {\n        debug {\n            signingConfig signingConfigs.debug\n        }');
-            fs.writeFileSync('android/app/build.gradle', content);
-          "
+          node scripts/configure-keystore.js
 
       - name: Build APK
         working-directory: android
