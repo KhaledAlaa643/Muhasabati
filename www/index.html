@@ -1731,6 +1731,7 @@
         chart: '<path d="M3 20h18M7 20V10M12 20V4M17 20v-7"/>',
         trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>',
         grip: '<circle cx="9" cy="5" r="1.5" fill="currentColor"/><circle cx="15" cy="5" r="1.5" fill="currentColor"/><circle cx="9" cy="12" r="1.5" fill="currentColor"/><circle cx="15" cy="12" r="1.5" fill="currentColor"/><circle cx="9" cy="19" r="1.5" fill="currentColor"/><circle cx="15" cy="19" r="1.5" fill="currentColor"/>',
+        calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
       };
       function icon(n, s) {
         s = s || 22; const e = document.createElement('span'); e.className = 'ico';
@@ -1799,7 +1800,7 @@
 
       /* ---------- الحالة ---------- */
       let S = null;
-      const UI = { tab: 'today', date: todayKey(), anchor: todayKey(), chartRange: 'week', chartTarget: 'all', chartCustomIds: [] };
+      const UI = { tab: 'today', date: todayKey(), anchor: todayKey(), chartRange: 'week', chartTarget: 'all', chartCustomIds: [], chartCustomFrom: key(addDays(today(), -30)), chartCustomTo: todayKey() };
       const blank = () => ({ v: 1, items: [], goals: [], log: {}, reviews: {}, settings: { weekStart: 6, timeMode: 'winter' } });
       function normalize(d) {
         const s = Object.assign(blank(), d || {});
@@ -1933,38 +1934,7 @@
       }
       function deleteGoal(id) { S.goals = S.goals.filter(g => g.id !== id); S.items.forEach(i => { if (i.goal === id) i.goal = null; }); }
 
-      /* ---------- القالب الجاهز ---------- */
-      function applyTemplate() {
-        const t = todayKey(), dl = key(addDays(today(), 14));
-        const G = o => Object.assign({ id: uid(), name: '', unit: '', target: 0, start: t, deadline: '', weekly: 0, group: '', outcome: '', entries: [] }, o);
-        const ac = G({ name: 'دروس الأكاديمية', unit: 'درس', target: 16, deadline: dl, weekly: 10, group: 'المرحلة الأولى', outcome: 'ترم الأكاديمية مخلص' });
-        const ng = G({ name: 'فيديوهات أنجولار', unit: 'فيديو', target: 8, deadline: dl, weekly: 6, group: 'المرحلة الأولى', outcome: 'مشروع صغير يجمع السيجنال والأداء' });
-        const sd = G({ name: 'سيستم ديزاين', unit: 'تصميم', target: 6, weekly: 1, group: 'المرحلة الثانية', outcome: '6 أنظمة مصممة ومكتوبة' });
-        const be = G({ name: 'الباك إند', unit: 'مشروع', target: 1, group: 'المرحلة الثالثة', outcome: 'واجهة برمجية صغيرة كاملة' });
-        S.goals.push(ac, ng, sd, be);
-        const ALL = [0, 1, 2, 3, 4, 5, 6], ST = [6, 0, 1, 2, 3, 4], SW = [0, 1, 2, 3], TH = [4], FR = [5], FS = [5, 6], STUDY = [6, 0, 1, 2, 3, 5];
-        const I = (name, days, start, end, goal) => S.items.push({ id: uid(), name, days, start: start || '', end: end || '', goal: goal ? goal.id : null, since: t });
-        I('الصلوات في المسجد', ALL);
-        I('قيام الليل', ALL, '23:30', '00:50');
-        I('نوم الليل', ALL, '01:00', '05:00');
-        I('الفجر وأذكار الصباح وركعتين الضحى', ALL, '05:30', '07:10');
-        I('الجزء الأول من القرآن', ALL, '07:10', '07:50');
-        I('نوم الصبح', ST, '08:00', '11:00');
-        I('نوم الصبح', FR, '08:00', '10:00');
-        I('أنجولار: مشاهدة الفيديو', ST, '11:30', '12:35', ng);
-        I('أنجولار: تطبيق على السيجنال', ST, '13:00', '13:30');
-        I('درس الأكاديمية الأول', ST, '13:45', '15:00', ac);
-        I('أذكار المساء والجزء الثاني', ALL, '16:15', '17:05');
-        I('علم شرعي مع كتابة الملخص', STUDY, '17:10', '18:15');
-        I('درس المسجد', TH, '18:25', '20:15');
-        I('درس الأكاديمية الثاني', SW, '20:15', '21:30', ac);
-        I('المقرأة بعد العشاء', FS, '20:00', '21:00');
-        I('كتابة ملخص درس المسجد', TH, '21:15', '21:45');
-        I('المسجد وصلاة الجمعة', FR, '10:40', '13:30');
-        I('نوم الجمعة', FR, '13:30', '14:30');
-        I('مراجعة الأسبوع', FR, '15:15', '15:35');
-        save();
-      }
+
 
       /* ---------- تصدير ---------- */
       function readText(f) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = no; r.readAsText(f); }); }
@@ -2067,6 +2037,66 @@
           }
         }, '?');
         return b;
+      }
+
+      /* ---------- اختيار تاريخ محدد ---------- */
+      function openDatePickerSheet(mode) {
+        const isWeek = mode === 'week';
+        const cur = isWeek ? (UI.anchor || todayKey()) : (UI.date || todayKey());
+        const inp = h('input', { class: 'in', type: 'date', value: cur, style: 'font-size:1.15rem;text-align:center;font-weight:700' });
+        const hijriPreview = h('div', { class: 'hint', style: 'margin-top:8px;font-size:.88rem;color:var(--pine);font-weight:700;text-align:center' });
+        const updateHijri = () => {
+          hijriPreview.textContent = inp.value ? ('الموافق هجرياً: ' + fmtHijri(inp.value, true)) : '';
+        };
+        inp.oninput = updateHijri;
+        inp.onchange = updateHijri;
+        updateHijri();
+
+        const quickJumpRow = h('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 6px;justify-content:center' });
+        const addBtn = (label, targetKey) => {
+          quickJumpRow.appendChild(h('button', {
+            type: 'button',
+            class: 'btn small',
+            style: 'background:var(--soft);color:var(--ink);font-weight:700',
+            onclick: () => {
+              inp.value = targetKey;
+              updateHijri();
+            }
+          }, label));
+        };
+
+        const t = todayKey();
+        addBtn('اليوم', t);
+        addBtn('أمس', key(addDays(today(), -1)));
+        addBtn('قبل أسبوع', key(addDays(today(), -7)));
+        addBtn('قبل شهر', key(addDays(today(), -30)));
+        addBtn('غداً', key(addDays(today(), 1)));
+
+        const body = [
+          h('p', { class: 'hint', style: 'margin-bottom:12px;text-align:center' }, isWeek ? 'اختر أي تاريخ للانتقال إلى الأسبوع الخاص به:' : 'اختر التاريخ الذي تريد الذهاب إليه:'),
+          inp,
+          hijriPreview,
+          quickJumpRow
+        ];
+
+        const foot = [
+          h('button', {
+            class: 'btn primary', onclick: () => {
+              if (inp.value) {
+                if (isWeek) {
+                  UI.anchor = inp.value;
+                } else {
+                  UI.date = inp.value;
+                }
+                closeSheet();
+                render();
+              }
+            }
+          }, isWeek ? 'عرض الأسبوع' : 'انتقال لليوم'),
+          h('button', { class: 'btn', onclick: closeSheet }, 'إلغاء')
+        ];
+
+        openSheet(isWeek ? 'الذهاب لأسبوع معين' : 'الذهاب ليوم معين', body, foot);
       }
 
       /* ---------- قوائم إسلامية ---------- */
@@ -2205,13 +2235,14 @@
         }
         const currentTarget = UI.chartTarget || 'all';
 
-        // 1. Time range tabs (week, month, 3months, 6months, year)
+        // 1. Time range tabs (week, month, 3months, 6months, year, custom)
         const ranges = [
           ['week', 'أسبوع'],
           ['month', 'شهر'],
           ['3months', '3 أشهر'],
           ['6months', '6 أشهر'],
-          ['year', 'سنة']
+          ['year', 'سنة'],
+          ['custom', '📅 مخصصة']
         ];
         const tabsEl = h('div', { class: 'chart-tabs' });
         ranges.forEach(([id, label]) => {
@@ -2221,6 +2252,56 @@
           }, label));
         });
         p.append(tabsEl);
+
+        // Custom Date Range Selector (shown when 'custom' range is active)
+        if (UI.chartRange === 'custom') {
+          const fromInput = h('input', {
+            type: 'date',
+            class: 'in',
+            value: UI.chartCustomFrom || key(addDays(today(), -30)),
+            style: 'font-weight:700'
+          });
+          const toInput = h('input', {
+            type: 'date',
+            class: 'in',
+            value: UI.chartCustomTo || todayKey(),
+            style: 'font-weight:700'
+          });
+
+          const updateDates = () => {
+            if (fromInput.value && toInput.value) {
+              if (fromInput.value > toInput.value) {
+                toInput.value = fromInput.value;
+              }
+              UI.chartCustomFrom = fromInput.value;
+              UI.chartCustomTo = toInput.value;
+              render();
+            }
+          };
+
+          fromInput.onchange = updateDates;
+          toInput.onchange = updateDates;
+
+          const fromVal = UI.chartCustomFrom || key(addDays(today(), -30));
+          const toVal = UI.chartCustomTo || todayKey();
+          const totalDaysCount = Math.max(1, diffDays(fromVal, toVal) + 1);
+
+          const customBox = h('div', { class: 'card', style: 'margin:10px 0 12px;padding:12px 14px' },
+            h('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px' },
+              h('span', { style: 'font-weight:800;font-size:.9rem;color:var(--pine)' }, '📅 تحديد فترة مخصصة:'),
+              h('span', { class: 'pill', style: 'font-weight:700' }, totalDaysCount + ' يوماً')
+            ),
+            h('div', { class: 'two' },
+              field('من تاريخ', fromInput),
+              field('إلى تاريخ', toInput)
+            ),
+            h('div', { style: 'display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink2);margin-top:6px' },
+              h('span', null, 'هجرياً: ' + fmtHijri(fromVal, false)),
+              h('span', null, 'إلى: ' + fmtHijri(toVal, true))
+            )
+          );
+          p.append(customBox);
+        }
 
         // 2. Filter / Target selector
         const filterWrap = h('div', { class: 'chart-filter-box' });
@@ -2276,6 +2357,15 @@
         else if (UI.chartRange === '3months') { for (let i = 89; i >= 0; i--) days.push(key(addDays(t, -i))); }
         else if (UI.chartRange === '6months') { for (let i = 179; i >= 0; i--) days.push(key(addDays(t, -i))); }
         else if (UI.chartRange === 'year') { for (let i = 364; i >= 0; i--) days.push(key(addDays(t, -i))); }
+        else if (UI.chartRange === 'custom') {
+          const fromK = UI.chartCustomFrom || key(addDays(today(), -30));
+          const toK = UI.chartCustomTo || todayKey();
+          const totalDays = Math.max(1, diffDays(fromK, toK) + 1);
+          const startD = parse(fromK);
+          for (let i = 0; i < totalDays; i++) {
+            days.push(key(addDays(startD, i)));
+          }
+        }
         else { for (let i = 6; i >= 0; i--) days.push(key(addDays(t, -i))); }
 
         const rangeLen = days.length;
@@ -2287,12 +2377,17 @@
 
         // 4. Group days into buckets for chart
         let buckets = [];
-        if (UI.chartRange === 'week') {
+        if (UI.chartRange === 'week' || (UI.chartRange === 'custom' && days.length <= 10)) {
           buckets = days.map(k => {
             const d = parse(k);
-            return { label: INIT[d.getDay()], subLabel: String(d.getDate()), days: [k], isToday: k === todayKey() };
+            return {
+              label: days.length <= 7 ? INIT[d.getDay()] : (d.getDate() + '/' + pad(d.getMonth() + 1)),
+              subLabel: String(d.getDate()),
+              days: [k],
+              isToday: k === todayKey()
+            };
           });
-        } else if (UI.chartRange === 'month' || UI.chartRange === '3months') {
+        } else if (UI.chartRange === 'month' || UI.chartRange === '3months' || (UI.chartRange === 'custom' && days.length <= 60)) {
           for (let i = 0; i < days.length; i += 7) {
             const slice = days.slice(i, i + 7);
             const d = parse(slice[0]);
@@ -2303,8 +2398,19 @@
               isToday: slice.includes(todayKey())
             });
           }
+        } else if (UI.chartRange === 'custom' && days.length <= 150) {
+          for (let i = 0; i < days.length; i += 14) {
+            const slice = days.slice(i, i + 14);
+            const d = parse(slice[0]);
+            buckets.push({
+              label: d.getDate() + '/' + pad(d.getMonth() + 1),
+              subLabel: '',
+              days: slice,
+              isToday: slice.includes(todayKey())
+            });
+          }
         } else {
-          // 6months & year: group by calendar month
+          // 6months, year, or long custom range: group by calendar month
           const mGroups = {};
           days.forEach(k => {
             const ym = k.slice(0, 7);
@@ -2956,7 +3062,15 @@
         p.append(h('div', { class: 'datenav' },
           h('button', { class: 'icon-btn', 'aria-label': 'اليوم السابق', onclick: () => { UI.date = key(addDays(parse(k), -1)); render(); } }, icon('chevR')),
           h('div', { class: 'datetxt' },
-            h('div', { class: 'dt-main' }, fmtFull(k)),
+            h('div', {
+              class: 'dt-main',
+              role: 'button',
+              tabindex: '0',
+              onclick: () => openDatePickerSheet('today'),
+              onkeydown: e => { if (e.key === 'Enter') openDatePickerSheet('today'); },
+              style: 'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px',
+              title: 'اضغط للانتقال ليوم معين'
+            }, fmtFull(k), icon('calendar', 16)),
             h('div', { class: 'dt-sub', style: 'margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px' },
               hijriToday ? h('span', { class: 'dt-hijri' }, hijriToday) : null,
               isToday ? h('span', null, '· اليوم') : h('button', { class: 'link', onclick: () => { UI.date = todayKey(); render(); } }, '· ارجع لليوم')
@@ -2964,11 +3078,9 @@
           h('button', { class: 'icon-btn', 'aria-label': 'اليوم التالي', onclick: () => { UI.date = key(addDays(parse(k), 1)); render(); } }, icon('chevL'))));
         if (!S.items.length && !S.goals.length) {
           p.append(h('div', { class: 'empty' }, h('h2', null, 'ابدأ بأول عنصر'),
-            h('p', null, 'العنصر هو أي حاجة بتعملها: عادة أو درس أو موعد. ضيف عناصرك بنفسك، أو اختار من قوائم إسلامية جاهزة، أو حمّل قالب خطتي.'),
             h('div', { class: 'btnrow' },
               h('button', { class: 'btn primary', onclick: () => itemEditor(null) }, 'عنصر جديد'),
-              h('button', { class: 'btn', onclick: openQuickListsSheet }, '📿 قوائم إسلامية جاهزة'),
-              h('button', { class: 'btn', onclick: () => { applyTemplate(); render(); } }, 'حمّل قالب خطتي الحالية'))));
+              h('button', { class: 'btn', onclick: openQuickListsSheet }, '📿 قوائم إسلامية جاهزة'))));
           return p;
         }
         const seg = h('div', { class: 'seg', 'aria-hidden': 'true' }, items.map(i => h('i', { class: isDone(k, i.id) ? 'on' : '' })));
@@ -3081,7 +3193,15 @@
         p.append(h('div', { class: 'datenav' },
           h('button', { class: 'icon-btn', 'aria-label': 'الأسبوع السابق', onclick: () => { UI.anchor = key(addDays(parse(days[0]), -7)); render(); } }, icon('chevR')),
           h('div', { class: 'datetxt' },
-            h('div', { class: 'dt-main' }, gregWeek),
+            h('div', {
+              class: 'dt-main',
+              role: 'button',
+              tabindex: '0',
+              onclick: () => openDatePickerSheet('week'),
+              onkeydown: e => { if (e.key === 'Enter') openDatePickerSheet('week'); },
+              style: 'cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px',
+              title: 'اضغط للانتقال لأسبوع معين'
+            }, gregWeek, icon('calendar', 16)),
             h('div', { class: 'dt-sub', style: 'margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px' },
               hijriWeek ? h('span', { class: 'dt-hijri' }, hijriWeek) : null,
               days.includes(t) ? h('span', null, '· الأسبوع ده') : h('button', { class: 'link', onclick: () => { UI.anchor = t; render(); } }, '· ارجع للأسبوع ده')
@@ -3225,13 +3345,12 @@
                   download('muhasabati-calendar.ics', buildICS(until.value), 'text/calendar');
                 }
               }, 'تصدير ملف التقويم'))),
-          h('div', { class: 'sec' }, 'قوالب وقوائم إسلامية'),
+          h('div', { class: 'sec' }, 'قوائم إسلامية مقترحة'),
           h('div', { class: 'card' },
             h('div', { class: 'btnrow' },
               h('button', { class: 'btn primary', onclick: openQuickListsSheet }, '📿 قوائم إسلامية جاهزة'),
-              h('button', { class: 'btn', onclick: () => { applyTemplate(); UI.tab = 'today'; render(); } }, 'أضف قالب خطتي الحالية'),
               twoStep('مسح كل البيانات', 'اضغط تاني للمسح', () => { S = blank(); save(); UI.tab = 'today'; render(); })),
-            h('p', { class: 'hint' }, 'القوالب والقوائم بيتضافوا على اللي عندك، ومش بيمسحوا حاجة.')));
+            h('p', { class: 'hint' }, 'القوائم المقترحة تتضاف على اللي عندك، ومش بتمسح حاجة.')));
         return p;
       }
 
