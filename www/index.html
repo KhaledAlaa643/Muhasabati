@@ -399,6 +399,71 @@
       border-radius: 3px
     }
 
+    .chart-filter-box {
+      margin: 12px 0 10px;
+    }
+
+    .chart-select {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: .92rem;
+      color: var(--ink);
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .chart-select:focus {
+      border-color: var(--pine);
+    }
+
+    .progress-card {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+
+    .progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .progress-title {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+
+    .progress-desc {
+      font-size: .88rem;
+      line-height: 1.55;
+      color: var(--ink2);
+      margin-top: 8px;
+    }
+
+    .progress-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: .82rem;
+    }
+
+    .progress-meta-item {
+      background: var(--soft);
+      padding: 4px 10px;
+      border-radius: 8px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
     /* --- quick lists --- */
     .qlist-grid {
       display: grid;
@@ -652,6 +717,11 @@
     .dt-sub {
       font-size: .85rem;
       color: var(--ink2)
+    }
+
+    .dt-hijri {
+      color: var(--pine);
+      font-weight: 700
     }
 
     .link {
@@ -1436,6 +1506,7 @@
       const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
       const INIT = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
       const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      const HIJRI_MONTHS = ['محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'];
       const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
       /* ---------- آيات وأحاديث ---------- */
@@ -1574,8 +1645,72 @@
       const today = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
       const todayKey = () => key(today());
       const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
-      const fmtDate = k => { const d = parse(k); return d.getDate() + ' ' + MONTHS[d.getMonth()]; };
-      const fmtFull = k => { const d = parse(k); return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; };
+      function kuwaitiHijri(d) {
+        const day = d.getDate(), month = d.getMonth(), year = d.getFullYear();
+        let m = month + 1, y = year;
+        if (m < 3) { y -= 1; m += 12; }
+        const a = Math.floor(y / 100), b = 2 - a + Math.floor(a / 4);
+        const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + b - 1524;
+        let z = jd - 1948440 + 10632;
+        const n = Math.floor((z - 1) / 10631);
+        z = z - 10631 * n + 354;
+        const j = (Math.floor((10985 - z) / 5316)) * (Math.floor((50 * z) / 17719)) + (Math.floor(z / 5670)) * (Math.floor((43 * z) / 15238));
+        z = z - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
+        const hm = Math.floor((24 * z) / 709);
+        const hd = z - Math.floor((709 * hm) / 24);
+        const hy = 30 * n + j - 30;
+        const mIdx = Math.max(0, Math.min(11, hm - 1));
+        return { day: hd, month: mIdx + 1, monthName: HIJRI_MONTHS[mIdx], year: hy };
+      }
+      function getHijri(date) {
+        const d = typeof date === 'string' ? parse(date) : date;
+        if (!d || isNaN(d.getTime())) return null;
+        if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+          const cals = ['en-u-ca-islamic-umalqura-nu-latn', 'en-u-ca-islamic-nu-latn'];
+          for (let i = 0; i < cals.length; i++) {
+            try {
+              const fmt = new Intl.DateTimeFormat(cals[i], { day: 'numeric', month: 'numeric', year: 'numeric' });
+              const parts = fmt.formatToParts(d);
+              let day = 0, month = 0, year = 0;
+              for (let j = 0; j < parts.length; j++) {
+                const p = parts[j];
+                if (p.type === 'day') day = parseInt(p.value, 10);
+                else if (p.type === 'month') month = parseInt(p.value, 10);
+                else if (p.type === 'year') year = parseInt(p.value, 10);
+              }
+              if (day >= 1 && day <= 30 && month >= 1 && month <= 12 && year > 1300 && year < 1700) {
+                return { day, month, monthName: HIJRI_MONTHS[month - 1], year };
+              }
+            } catch (e) { }
+          }
+        }
+        return kuwaitiHijri(d);
+      }
+      const fmtHijri = (k, withYear = true) => {
+        const h = getHijri(k);
+        if (!h) return '';
+        return h.day + ' ' + h.monthName + (withYear ? (' ' + h.year + ' هـ') : '');
+      };
+      const fmtDate = (k, withYear = false) => {
+        if (!k) return '';
+        const d = typeof k === 'string' ? parse(k) : k;
+        if (!d || isNaN(d.getTime())) return String(k);
+        return d.getDate() + ' ' + MONTHS[d.getMonth()] + (withYear ? (' ' + d.getFullYear() + ' م') : '');
+      };
+      const fmtFull = (k, withYear = true) => {
+        if (!k) return '';
+        const d = typeof k === 'string' ? parse(k) : k;
+        if (!d || isNaN(d.getTime())) return String(k);
+        return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + (withYear ? (' ' + d.getFullYear() + ' م') : '');
+      };
+      const fmtDateWithHijri = (k, withYear = true) => {
+        if (!k) return '';
+        const d = typeof k === 'string' ? parse(k) : k;
+        if (!d || isNaN(d.getTime())) return String(k);
+        const greg = d.getDate() + ' ' + MONTHS[d.getMonth()] + (withYear ? (' ' + d.getFullYear() + ' م') : '');
+        const hij = fmtHijri(d, withYear);
+        return hij ? (greg + ' (' + hij + ')') : greg;
+      };
       const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
       const toMin = t => { if (!t) return null; const p = t.split(':').map(Number); return p[0] * 60 + p[1]; };
       const minHM = m => pad(Math.floor(m / 60) % 24) + ':' + pad(m % 60);
@@ -1664,7 +1799,7 @@
 
       /* ---------- الحالة ---------- */
       let S = null;
-      const UI = { tab: 'today', date: todayKey(), anchor: todayKey(), chartRange: 'week' };
+      const UI = { tab: 'today', date: todayKey(), anchor: todayKey(), chartRange: 'week', chartTarget: 'all', chartCustomIds: [] };
       const blank = () => ({ v: 1, items: [], goals: [], log: {}, reviews: {}, settings: { weekStart: 6, timeMode: 'winter' } });
       function normalize(d) {
         const s = Object.assign(blank(), d || {});
@@ -2007,103 +2142,567 @@
         const done = items.filter(i => isDone(k, i.id)).length;
         return { done, total: items.length, pct: Math.round(done / items.length * 100) };
       }
+      function openCustomStatsSheet() {
+        const selected = new Set(UI.chartCustomIds || []);
+        const body = h('div', { class: 'custom-filter-sheet' });
+        body.append(h('p', { class: 'hint', style: 'margin:0 0 14px;font-size:.88rem' }, 'اختر الأهداف أو المهام التي تريد متابعة تقدمها وإحصائياتها معاً:'));
+
+        if (S.goals.length) {
+          body.append(h('div', { class: 'grp', style: 'margin-top:4px' }, '🎯 أهداف صفحة الأهداف'));
+          S.goals.forEach(g => {
+            const gid = 'goal:' + g.id;
+            const chk = h('input', { type: 'checkbox', id: 'c_g_' + g.id, checked: selected.has(gid), style: 'width:18px;height:18px;accent-color:var(--pine)' });
+            chk.onchange = () => { if (chk.checked) selected.add(gid); else selected.delete(gid); };
+            const lbl = h('label', { for: 'c_g_' + g.id, style: 'display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--line)' },
+              chk, h('span', { style: 'font-weight:700;flex:1' }, g.name), g.target ? h('small', { style: 'color:var(--ink2)' }, num(g.target) + ' ' + g.unit) : null
+            );
+            body.append(lbl);
+          });
+        }
+
+        if (S.items.length) {
+          body.append(h('div', { class: 'grp', style: 'margin-top:16px' }, '📋 المهام والعادات اليومية'));
+          S.items.forEach(it => {
+            const iid = 'item:' + it.id;
+            const chk = h('input', { type: 'checkbox', id: 'c_i_' + it.id, checked: selected.has(iid), style: 'width:18px;height:18px;accent-color:var(--pine)' });
+            chk.onchange = () => { if (chk.checked) selected.add(iid); else selected.delete(iid); };
+            const lbl = h('label', { for: 'c_i_' + it.id, style: 'display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--line)' },
+              chk, h('span', { style: 'flex:1' }, it.name)
+            );
+            body.append(lbl);
+          });
+        }
+
+        const foot = [
+          h('button', {
+            class: 'btn primary', onclick: () => {
+              if (!selected.size) {
+                UI.chartTarget = 'all';
+                UI.chartCustomIds = [];
+              } else {
+                UI.chartTarget = 'custom';
+                UI.chartCustomIds = Array.from(selected);
+              }
+              closeSheet();
+              render();
+            }
+          }, 'تطبيق الاختيار (' + selected.size + ')'),
+          h('button', { class: 'btn', onclick: closeSheet }, 'إلغاء')
+        ];
+        openSheet('تحديد مخصص للإحصائيات', body, foot);
+      }
+
       function viewCharts() {
         const p = h('div', { class: 'page' });
         p.append(h('div', { class: 'sec' }, 'إحصائياتك'));
-        const ranges = [['week', 'آخر أسبوع'], ['month', 'آخر شهر'], ['3months', 'آخر 3 أشهر']];
+
+        // Validate target
+        if (UI.chartTarget && UI.chartTarget.startsWith('goal:') && !S.goals.some(g => g.id === UI.chartTarget.slice(5))) {
+          UI.chartTarget = 'all';
+        }
+        if (UI.chartTarget && UI.chartTarget.startsWith('item:') && !S.items.some(i => i.id === UI.chartTarget.slice(5))) {
+          UI.chartTarget = 'all';
+        }
+        const currentTarget = UI.chartTarget || 'all';
+
+        // 1. Time range tabs (week, month, 3months, 6months, year)
+        const ranges = [
+          ['week', 'أسبوع'],
+          ['month', 'شهر'],
+          ['3months', '3 أشهر'],
+          ['6months', '6 أشهر'],
+          ['year', 'سنة']
+        ];
         const tabsEl = h('div', { class: 'chart-tabs' });
         ranges.forEach(([id, label]) => {
-          tabsEl.appendChild(h('button', { class: 'chart-tab' + (UI.chartRange === id ? ' active' : ''), onclick: () => { UI.chartRange = id; render(); } }, label));
+          tabsEl.appendChild(h('button', {
+            class: 'chart-tab' + (UI.chartRange === id ? ' active' : ''),
+            onclick: () => { UI.chartRange = id; render(); }
+          }, label));
         });
         p.append(tabsEl);
+
+        // 2. Filter / Target selector
+        const filterWrap = h('div', { class: 'chart-filter-box' });
+        const scopeSelect = h('select', {
+          class: 'chart-select',
+          'aria-label': 'تصفية الإحصائيات حسب الهدف أو المهمة',
+          onchange: () => {
+            if (scopeSelect.value === 'custom') {
+              openCustomStatsSheet();
+            } else {
+              UI.chartTarget = scopeSelect.value;
+              render();
+            }
+          }
+        });
+
+        scopeSelect.appendChild(h('option', { value: 'all' }, '📊 جميع العناصر اليومية (الإنجاز العام)'));
+        if (S.goals.length) {
+          const gGrp = h('optgroup', { label: '🎯 أهداف صفحة الأهداف' });
+          if (S.goals.length > 1) {
+            gGrp.appendChild(h('option', { value: 'goals:all' }, '🎯 جميع أهداف صفحة الأهداف مجتمعة'));
+          }
+          S.goals.forEach(g => {
+            gGrp.appendChild(h('option', { value: 'goal:' + g.id }, '🎯 هدف: ' + g.name + (g.target ? ' (' + num(g.target) + ' ' + g.unit + ')' : '')));
+          });
+          scopeSelect.appendChild(gGrp);
+        }
+        if (S.items.length) {
+          const iGrp = h('optgroup', { label: '📋 المهام والعادات اليومية' });
+          S.items.forEach(it => {
+            iGrp.appendChild(h('option', { value: 'item:' + it.id }, '📋 مهمة: ' + it.name));
+          });
+          scopeSelect.appendChild(iGrp);
+        }
+        scopeSelect.appendChild(h('option', { value: 'custom' }, '✨ تحديد مخصص (مجموعة محددة)...'));
+        scopeSelect.value = currentTarget;
+        filterWrap.appendChild(scopeSelect);
+
+        if (currentTarget === 'custom') {
+          const count = (UI.chartCustomIds || []).length;
+          filterWrap.appendChild(h('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-top:6px' },
+            h('span', { style: 'font-size:.82rem;color:var(--ink2)' }, 'مجموعة مخصصة: ' + count + ' عناصر محددة'),
+            h('button', { class: 'link', style: 'font-size:.82rem', onclick: openCustomStatsSheet }, 'تعديل الاختيار...')
+          ));
+        }
+        p.append(filterWrap);
+
+        // 3. Generate dates for current and previous period
         let days = [];
         const t = today();
-        if (UI.chartRange === 'week') { for (let i = 6; i >= 0; i--)days.push(key(addDays(t, -i))); }
-        else if (UI.chartRange === 'month') { for (let i = 29; i >= 0; i--)days.push(key(addDays(t, -i))); }
-        else { for (let i = 89; i >= 0; i--)days.push(key(addDays(t, -i))); }
-        const stats = days.map(k => ({ k, s: getDayStats(k) }));
-        const valid = stats.filter(x => x.s);
-        const avgPct = valid.length ? Math.round(valid.reduce((s, x) => s + x.s.pct, 0) / valid.length) : 0;
-        const best = valid.reduce((b, x) => (!b || x.s.pct > b.s.pct) ? x : b, null);
-        const streak7 = stats.slice(-7).filter(x => x.s && x.s.pct === 100).length;
-        const summRow = h('div', { style: 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px' });
-        [[avgPct + '%', 'متوسط الإنجاز'], [best ? best.s.pct + '%' : '–', 'أفضل يوم'], [streak7 + '/7', 'أيام مكتملة']].forEach(([v, l]) => {
-          summRow.appendChild(h('div', { class: 'card', style: 'text-align:center;padding:10px 8px' },
-            h('div', { style: 'font-size:1.4rem;font-weight:800;color:var(--pine)' }, v),
-            h('div', { style: 'font-size:.74rem;color:var(--ink2);margin-top:2px' }, l)));
-        });
-        p.append(summRow);
-        const barsEl = h('div', { class: 'chart-bars' });
-        if (UI.chartRange !== 'week') {
-          const weeks = [];
+        if (UI.chartRange === 'week') { for (let i = 6; i >= 0; i--) days.push(key(addDays(t, -i))); }
+        else if (UI.chartRange === 'month') { for (let i = 29; i >= 0; i--) days.push(key(addDays(t, -i))); }
+        else if (UI.chartRange === '3months') { for (let i = 89; i >= 0; i--) days.push(key(addDays(t, -i))); }
+        else if (UI.chartRange === '6months') { for (let i = 179; i >= 0; i--) days.push(key(addDays(t, -i))); }
+        else if (UI.chartRange === 'year') { for (let i = 364; i >= 0; i--) days.push(key(addDays(t, -i))); }
+        else { for (let i = 6; i >= 0; i--) days.push(key(addDays(t, -i))); }
+
+        const rangeLen = days.length;
+        const firstDay = parse(days[0]);
+        let prevDays = [];
+        for (let i = rangeLen; i >= 1; i--) {
+          prevDays.push(key(addDays(firstDay, -i)));
+        }
+
+        // 4. Group days into buckets for chart
+        let buckets = [];
+        if (UI.chartRange === 'week') {
+          buckets = days.map(k => {
+            const d = parse(k);
+            return { label: INIT[d.getDay()], subLabel: String(d.getDate()), days: [k], isToday: k === todayKey() };
+          });
+        } else if (UI.chartRange === 'month' || UI.chartRange === '3months') {
           for (let i = 0; i < days.length; i += 7) {
             const slice = days.slice(i, i + 7);
-            const ss = slice.map(k => getDayStats(k)).filter(Boolean);
-            const avg = ss.length ? Math.round(ss.reduce((s, x) => s + x.pct, 0) / ss.length) : 0;
             const d = parse(slice[0]);
-            weeks.push({ label: d.getDate() + '/' + pad(d.getMonth() + 1), pct: avg, hasData: ss.length > 0 });
+            buckets.push({
+              label: d.getDate() + '/' + pad(d.getMonth() + 1),
+              subLabel: '',
+              days: slice,
+              isToday: slice.includes(todayKey())
+            });
           }
-          var pctArr = weeks.map(w => w.pct); pctArr.push(1);
-          const maxPct = Math.max.apply(null, pctArr);
-          weeks.forEach(w => {
-            const col = h('div', { class: 'chart-col' });
-            col.appendChild(h('div', { class: 'chart-pct' }, w.hasData ? w.pct + '%' : ''));
-            const bw = h('div', { class: 'chart-bar-wrap' });
-            const bar = h('div', { class: 'chart-bar' + (w.pct === 0 ? ' zero' : '') });
-            bar.style.height = (w.hasData ? Math.max(4, Math.round(w.pct / maxPct * 100)) : 4) + '%';
-            bw.appendChild(bar); col.appendChild(bw);
-            col.appendChild(h('div', { class: 'chart-lbl' }, w.label));
-            barsEl.appendChild(col);
-          });
         } else {
-          stats.forEach(({ k, s }) => {
-            const d = parse(k); const isT = k === todayKey();
-            const col = h('div', { class: 'chart-col' });
-            col.appendChild(h('div', { class: 'chart-pct' }, s ? s.pct + '%' : ''));
-            const bw = h('div', { class: 'chart-bar-wrap' });
-            const bar = h('div', { class: 'chart-bar' + ((!s || s.pct === 0) ? ' zero' : '') });
-            if (isT) bar.style.background = 'var(--saffron)';
-            bar.style.height = (s ? Math.max(4, s.pct) : 4) + '%';
-            bw.appendChild(bar); col.appendChild(bw);
-            col.appendChild(h('div', { class: 'chart-lbl' }, INIT[d.getDay()]));
-            barsEl.appendChild(col);
+          // 6months & year: group by calendar month
+          const mGroups = {};
+          days.forEach(k => {
+            const ym = k.slice(0, 7);
+            (mGroups[ym] = mGroups[ym] || []).push(k);
+          });
+          const keys = Object.keys(mGroups).sort();
+          buckets = keys.map(ym => {
+            const slice = mGroups[ym];
+            const d = parse(slice[0]);
+            return {
+              label: MONTHS[d.getMonth()],
+              subLabel: String(d.getFullYear()).slice(2),
+              days: slice,
+              isToday: slice.includes(todayKey())
+            };
           });
         }
+
+        // 5. Target Analysis
+        const isGoalTarget = currentTarget.startsWith('goal:');
+        const isAllGoals = currentTarget === 'goals:all';
+        const isItemTarget = currentTarget.startsWith('item:');
+        const isCustom = currentTarget === 'custom';
+
+        const selectedGoal = isGoalTarget ? S.goals.find(g => g.id === currentTarget.slice(5)) : null;
+        const selectedItem = isItemTarget ? S.items.find(i => i.id === currentTarget.slice(5)) : null;
+
+        let statusChip = null;
+        let statusTitle = '';
+        let statusDesc = '';
+        let summCards = [];
+        let extraReportEl = null;
+        let breakdownSec = null;
+        let isUnitsMode = false;
+
+        if (selectedGoal) {
+          isUnitsMode = true;
+          const g = selectedGoal;
+          const o = pace(g);
+          const curUnits = goalCount(g, days[0], days[days.length - 1]);
+          const prevUnits = goalCount(g, prevDays[0], prevDays[prevDays.length - 1]);
+          const unitDiff = curUnits - prevUnits;
+          const dailyRate = curUnits / days.length;
+          const weeklyRate = dailyRate * 7;
+
+          buckets.forEach(b => {
+            b.val = goalCount(g, b.days[0], b.days[b.days.length - 1]);
+            b.hasData = b.val > 0;
+            b.displayVal = b.val > 0 ? String(b.val) : '';
+          });
+
+          statusTitle = '🎯 تقدم هدف: ' + g.name;
+
+          if (o.done) {
+            statusChip = h('span', { class: 'pill ok' }, 'مكتمل بالكامل 🎉');
+            statusDesc = 'مبروك! أتممت هذا الهدف بنجاح محققاً ' + num(o.total) + ' ' + g.unit + '.';
+          } else if (o.overdue) {
+            statusChip = h('span', { class: 'pill bad' }, 'الموعد انقضى ⚠️');
+            statusDesc = 'الموعد النهائي المحدد للهدف (' + fmtDateWithHijri(g.deadline) + ') قد انقضى. المتبقي لإتمام الهدف ' + num(o.remaining) + ' ' + g.unit + '.';
+          } else if (g.deadline && o.need) {
+            if (dailyRate >= o.need) {
+              statusChip = h('span', { class: 'pill ok' }, '⚡ متقدم وعلى المسار');
+              statusDesc = 'أنت على المسار الصحيح! بمعدلك في هذه الفترة (' + num(dailyRate) + ' ' + g.unit + '/يوم) أنت تتجاوز المعدل المطلوب (' + num(o.need) + ' ' + g.unit + '/يوم) لإنهاء الهدف في موعده (' + fmtDateWithHijri(g.deadline) + ').';
+            } else {
+              statusChip = h('span', { class: 'pill bad' }, '⏳ متأخر عن الخطة');
+              statusDesc = 'معدل إنجازك في هذه الفترة (' + num(dailyRate) + ' ' + g.unit + '/يوم) أقل من المعدل المطلوب (' + num(o.need) + ' ' + g.unit + '/يوم). تحتاج لزيادة إنجازك اليومي لتدارك التأخر وإنهاء الهدف في موعده (' + fmtDateWithHijri(g.deadline) + ').';
+            }
+          } else if (g.weekly) {
+            const expected = Math.round((days.length / 7) * g.weekly);
+            if (curUnits >= expected) {
+              statusChip = h('span', { class: 'pill ok' }, '📈 متقدم عن الأسبوعي');
+              statusDesc = 'حققت ' + num(curUnits) + ' ' + g.unit + ' في هذه الفترة متجاوزاً المستهدف المطلوب (' + expected + ' ' + g.unit + ').';
+            } else {
+              statusChip = h('span', { class: 'pill bad' }, '📉 متأخر عن الأسبوعي');
+              statusDesc = 'حققت ' + num(curUnits) + ' ' + g.unit + ' في هذه الفترة، وهو أقل من المستهدف المطلوب (' + expected + ' ' + g.unit + ').';
+            }
+          } else {
+            statusChip = h('span', { class: 'pill ok' }, 'مستمر في الإنجاز');
+            statusDesc = 'أنجزت ' + num(curUnits) + ' ' + g.unit + ' في هذه الفترة بمعدل ' + num(weeklyRate) + ' ' + g.unit + '/أسبوعياً.';
+          }
+
+          extraReportEl = h('div', { class: 'progress-meta-row' });
+          if (o.eta && !o.done) {
+            extraReportEl.appendChild(h('span', { class: 'progress-meta-item' }, 'الموعد المتوقع للإنهاء: ' + fmtDateWithHijri(o.eta)));
+          }
+          if (g.deadline) {
+            extraReportEl.appendChild(h('span', { class: 'progress-meta-item' }, 'الموعد النهائي: ' + fmtDateWithHijri(g.deadline)));
+          }
+          if (g.outcome) {
+            extraReportEl.appendChild(h('span', { class: 'progress-meta-item' }, 'المخرج: ' + g.outcome));
+          }
+
+          summCards = [
+            ['+' + num(curUnits) + ' ' + g.unit, 'منجز في الفترة'],
+            [num(o.total) + (g.target ? (' من ' + num(g.target)) : '') + ' ' + g.unit, 'الإجمالي الكلي'],
+            [(unitDiff > 0 ? ('+' + num(unitDiff)) : (unitDiff < 0 ? num(unitDiff) : '0')) + ' ' + g.unit, 'عن الفترة السابقة']
+          ];
+
+          const linked = S.items.filter(i => i.goal === g.id);
+          if (linked.length) {
+            breakdownSec = h('div', null,
+              h('div', { class: 'sec' }, 'مساهمة المهام اليومية في هذا الهدف'),
+              h('div', { class: 'card' },
+                linked.map((it, idx) => {
+                  let itDone = 0;
+                  days.forEach(k => { if (isDone(k, it.id)) itDone++; });
+                  return h('div', { style: 'display:flex;align-items:center;justify-content:space-between;padding:' + (idx ? '8px 0 0' : '0') + ';' + (idx ? 'border-top:1px solid var(--line);margin-top:8px' : '') },
+                    h('div', null,
+                      h('div', { style: 'font-weight:700;font-size:.92rem' }, it.name),
+                      h('div', { style: 'font-size:.76rem;color:var(--ink2)' }, 'مهمة يومية مرتبطة بالهدف')
+                    ),
+                    h('span', { style: 'font-weight:800;color:var(--pine)' }, '+' + itDone + ' ' + g.unit)
+                  );
+                })
+              )
+            );
+          }
+
+        } else if (selectedItem) {
+          const it = selectedItem;
+          let curDue = 0, curDone = 0;
+          days.forEach(k => { if (runsOn(it, k)) { curDue++; if (isDone(k, it.id)) curDone++; } });
+          const curPct = curDue ? Math.round(curDone / curDue * 100) : 0;
+
+          let prevDue = 0, prevDone = 0;
+          prevDays.forEach(k => { if (runsOn(it, k)) { prevDue++; if (isDone(k, it.id)) prevDone++; } });
+          const prevPct = prevDue ? Math.round(prevDone / prevDue * 100) : 0;
+          const delta = curPct - prevPct;
+
+          buckets.forEach(b => {
+            let bDue = 0, bDone = 0;
+            b.days.forEach(k => { if (runsOn(it, k)) { bDue++; if (isDone(k, it.id)) bDone++; } });
+            b.val = bDue ? Math.round(bDone / bDue * 100) : 0;
+            b.hasData = bDue > 0;
+            b.displayVal = bDue > 0 ? (b.val + '%') : '';
+          });
+
+          statusTitle = '📋 التزام مهمة: ' + it.name;
+
+          if (!prevDue) {
+            statusChip = h('span', { class: 'pill ok' }, curPct + '% التزام');
+            statusDesc = 'نسبة التزامك بمهمة "' + it.name + '" في هذه الفترة هي ' + curPct + '% (' + curDone + ' من ' + curDue + ' يوم مجدول).';
+          } else if (delta > 0) {
+            statusChip = h('span', { class: 'pill ok' }, '📈 متقدم (+' + delta + '%)');
+            statusDesc = 'أداؤك في تقدم ملحوظ! تحسن التزامك بنسبة +' + delta + '% مقارنة بالفترة السابقة المماثلة (ارتفع من ' + prevPct + '% إلى ' + curPct + '%).';
+          } else if (delta < 0) {
+            statusChip = h('span', { class: 'pill bad' }, '📉 متأخر (' + delta + '%)');
+            statusDesc = 'تراجع التزامك بمهمة "' + it.name + '" بنسبة ' + Math.abs(delta) + '% مقارنة بالفترة السابقة المماثلة (انخفض من ' + prevPct + '% إلى ' + curPct + '%). حاول العودة للالتزام اليومي.';
+          } else {
+            statusChip = h('span', { class: 'pill' }, 'ثابت (' + curPct + '%)');
+            statusDesc = 'حافظت على نفس نسبة الالتزام (' + curPct + '%) تماماً مثل الفترة السابقة المماثلة.';
+          }
+
+          extraReportEl = h('div', { class: 'progress-meta-row' },
+            h('span', { class: 'progress-meta-item' }, 'الأيام المتتالية الحالية: ' + streak(it) + ' يوم'),
+            it.goal ? (function () {
+              const g = S.goals.find(x => x.id === it.goal);
+              return g ? h('span', { class: 'progress-meta-item' }, 'مرتبطة بهدف: ' + g.name) : null;
+            })() : null
+          );
+
+          summCards = [
+            [curPct + '%', 'نسبة الالتزام'],
+            [curDone + ' / ' + curDue, 'أيام الإنجاز'],
+            [(delta > 0 ? ('+' + delta + '%') : (delta < 0 ? (delta + '%') : '0%')), 'عن الفترة السابقة']
+          ];
+
+        } else if (isAllGoals) {
+          isUnitsMode = true;
+          let totalCur = 0, totalPrev = 0;
+          S.goals.forEach(g => {
+            totalCur += goalCount(g, days[0], days[days.length - 1]);
+            totalPrev += goalCount(g, prevDays[0], prevDays[prevDays.length - 1]);
+          });
+          const deltaUnits = totalCur - totalPrev;
+
+          buckets.forEach(b => {
+            let sum = 0;
+            S.goals.forEach(g => { sum += goalCount(g, b.days[0], b.days[b.days.length - 1]); });
+            b.val = sum;
+            b.hasData = sum > 0;
+            b.displayVal = sum > 0 ? String(sum) : '';
+          });
+
+          statusTitle = '🎯 تقرير جميع الأهداف مجتمعة';
+          if (deltaUnits >= 0) {
+            statusChip = h('span', { class: 'pill ok' }, '📈 في ازدياد (+' + deltaUnits + ')');
+            statusDesc = 'إجمالي ما أنجزته عبر جميع أهدافك في هذه الفترة هو ' + totalCur + ' وحدة (بزيادة +' + deltaUnits + ' وحدة عن الفترة السابقة المماثلة).';
+          } else {
+            statusChip = h('span', { class: 'pill bad' }, '📉 تراجع في الوتيرة (' + deltaUnits + ')');
+            statusDesc = 'إجمالي ما أنجزته عبر جميع أهدافك في هذه الفترة هو ' + totalCur + ' وحدة (بانخفاض ' + Math.abs(deltaUnits) + ' وحدة عن الفترة السابقة المماثلة).';
+          }
+
+          summCards = [
+            ['+' + totalCur, 'إجمالي المنجز في الفترة'],
+            [String(S.goals.length), 'عدد الأهداف النشطة'],
+            [(deltaUnits >= 0 ? ('+' + deltaUnits) : String(deltaUnits)), 'عن الفترة السابقة']
+          ];
+
+          breakdownSec = h('div', null,
+            h('div', { class: 'sec' }, 'تفاصيل الأهداف في هذه الفترة'),
+            h('div', { class: 'card' },
+              S.goals.map((g, idx) => {
+                const count = goalCount(g, days[0], days[days.length - 1]);
+                const o = pace(g);
+                return h('div', { style: 'padding:' + (idx ? '10px 0 0' : '0') + ';' + (idx ? 'border-top:1px solid var(--line);margin-top:10px' : '') },
+                  h('div', { style: 'display:flex;align-items:center;justify-content:space-between;margin-bottom:4px' },
+                    h('div', { style: 'font-weight:700' }, g.name),
+                    h('span', { class: 'pill ' + (o.done ? 'ok' : o.overdue ? 'bad' : o.late ? 'bad' : 'ok') },
+                      o.done ? 'مكتمل' : o.overdue ? 'عدّى الموعد' : o.late ? 'متأخر' : 'على المسار'
+                    )
+                  ),
+                  h('div', { style: 'display:flex;justify-content:space-between;font-size:.82rem;color:var(--ink2)' },
+                    h('span', null, 'أنجزت في الفترة: ' + count + ' ' + g.unit),
+                    h('span', null, 'الإجمالي: ' + num(o.total) + (g.target ? ('/' + num(g.target)) : ''))
+                  )
+                );
+              })
+            )
+          );
+
+        } else if (isCustom) {
+          const selected = new Set(UI.chartCustomIds || []);
+          const chosenGoals = S.goals.filter(g => selected.has('goal:' + g.id));
+          const chosenItems = S.items.filter(i => selected.has('item:' + i.id));
+
+          let cDue = 0, cDone = 0;
+          days.forEach(k => {
+            chosenItems.forEach(it => { if (runsOn(it, k)) { cDue++; if (isDone(k, it.id)) cDone++; } });
+          });
+          const curPct = cDue ? Math.round(cDone / cDue * 100) : 0;
+
+          let pDue = 0, pDone = 0;
+          prevDays.forEach(k => {
+            chosenItems.forEach(it => { if (runsOn(it, k)) { pDue++; if (isDone(k, it.id)) pDone++; } });
+          });
+          const prevPct = pDue ? Math.round(pDone / pDue * 100) : 0;
+          const delta = curPct - prevPct;
+
+          let goalsCurUnits = 0;
+          chosenGoals.forEach(g => { goalsCurUnits += goalCount(g, days[0], days[days.length - 1]); });
+
+          buckets.forEach(b => {
+            let bDue = 0, bDone = 0;
+            b.days.forEach(k => {
+              chosenItems.forEach(it => { if (runsOn(it, k)) { bDue++; if (isDone(k, it.id)) bDone++; } });
+            });
+            b.val = bDue ? Math.round(bDone / bDue * 100) : 0;
+            b.hasData = bDue > 0;
+            b.displayVal = bDue > 0 ? (b.val + '%') : '';
+          });
+
+          statusTitle = '✨ إحصائيات المجموعة المخصصة (' + selected.size + ' عناصر)';
+          if (!pDue) {
+            statusChip = h('span', { class: 'pill ok' }, curPct + '% إنجاز');
+            statusDesc = 'نسبة التزام المجموعة المحددة هي ' + curPct + '% في هذه الفترة.';
+          } else if (delta > 0) {
+            statusChip = h('span', { class: 'pill ok' }, '📈 متقدم (+' + delta + '%)');
+            statusDesc = 'أداؤك في هذه المجموعة في تقدم بنسبة +' + delta + '% مقارنة بالفترة السابقة المماثلة.';
+          } else if (delta < 0) {
+            statusChip = h('span', { class: 'pill bad' }, '📉 متأخر (' + delta + '%)');
+            statusDesc = 'أداؤك في هذه المجموعة تراجع بنسبة ' + Math.abs(delta) + '% مقارنة بالفترة السابقة المماثلة.';
+          } else {
+            statusChip = h('span', { class: 'pill' }, 'ثابت (' + curPct + '%)');
+            statusDesc = 'حافظت على نفس نسبة الالتزام (' + curPct + '%) مقارنة بالفترة السابقة المماثلة.';
+          }
+
+          summCards = [
+            [curPct + '%', 'متوسط التزام المهام'],
+            ['+' + goalsCurUnits, 'وحدات الأهداف المنجزة'],
+            [(delta > 0 ? ('+' + delta + '%') : (delta < 0 ? (delta + '%') : '0%')), 'عن الفترة السابقة']
+          ];
+
+        } else {
+          // Default: All daily items
+          const curStats = days.map(k => ({ k, s: getDayStats(k) })).filter(x => x.s);
+          const curAvg = curStats.length ? Math.round(curStats.reduce((s, x) => s + x.s.pct, 0) / curStats.length) : 0;
+          const best = curStats.reduce((b, x) => (!b || x.s.pct > b.s.pct) ? x : b, null);
+
+          const prevStats = prevDays.map(k => ({ k, s: getDayStats(k) })).filter(x => x.s);
+          const prevAvg = prevStats.length ? Math.round(prevStats.reduce((s, x) => s + x.s.pct, 0) / prevStats.length) : 0;
+          const delta = curAvg - prevAvg;
+
+          buckets.forEach(b => {
+            const ss = b.days.map(k => getDayStats(k)).filter(Boolean);
+            b.val = ss.length ? Math.round(ss.reduce((s, x) => s + x.pct, 0) / ss.length) : 0;
+            b.hasData = ss.length > 0;
+            b.displayVal = ss.length > 0 ? (b.val + '%') : '';
+          });
+
+          statusTitle = '📊 تقرير الإنجاز اليومي العام';
+          if (!prevStats.length) {
+            statusChip = h('span', { class: 'pill ok' }, curAvg + '% متوسط الإنجاز');
+            statusDesc = 'متوسط إنجازك اليومي في هذه الفترة هو ' + curAvg + '%.';
+          } else if (delta > 0) {
+            statusChip = h('span', { class: 'pill ok' }, '📈 متقدم (+' + delta + '%)');
+            statusDesc = 'أداؤك العام في تصاعد! ارتفع متوسط إنجازك بنسبة +' + delta + '% مقارنة بالفترة السابقة المماثلة (من ' + prevAvg + '% إلى ' + curAvg + '%). استمر!';
+          } else if (delta < 0) {
+            statusChip = h('span', { class: 'pill bad' }, '📉 متأخر (' + delta + '%)');
+            statusDesc = 'تراجع متوسط إنجازك العام بنسبة ' + Math.abs(delta) + '% مقارنة بالفترة السابقة المماثلة (انخفض من ' + prevAvg + '% إلى ' + curAvg + '%). حاول تنظيم وقتك لاستعادة الوتيرة.';
+          } else {
+            statusChip = h('span', { class: 'pill' }, 'ثابت (' + curAvg + '%)');
+            statusDesc = 'أداؤك العام مستقر تماماً بنسبة ' + curAvg + '% مثل الفترة السابقة المماثلة.';
+          }
+
+          summCards = [
+            [curAvg + '%', 'متوسط الإنجاز'],
+            [best ? (best.s.pct + '%') : '–', 'أفضل يوم'],
+            [(delta > 0 ? ('+' + delta + '%') : (delta < 0 ? (delta + '%') : '0%')), 'عن الفترة السابقة']
+          ];
+
+          const valid = curStats;
+          if (valid.length) {
+            const iStats = {};
+            days.forEach(k => {
+              itemsOn(k).forEach(i => {
+                if (!iStats[i.id]) iStats[i.id] = { name: i.name, done: 0, due: 0 };
+                iStats[i.id].due++;
+                if (isDone(k, i.id)) iStats[i.id].done++;
+              });
+            });
+            const sorted = Object.keys(iStats).map(k => iStats[k]).filter(x => x.due >= 3).sort((a, b) => (b.done / b.due) - (a.done / a.due)).slice(0, 5);
+            if (sorted.length) {
+              breakdownSec = h('div', null,
+                h('div', { class: 'sec' }, 'أكثر العناصر التزاماً'),
+                h('div', { class: 'card' },
+                  sorted.map((x, idx) => {
+                    const pct = Math.round(x.done / x.due * 100);
+                    const row = h('div', { style: 'display:flex;align-items:center;gap:10px;' + (idx ? 'margin-top:10px;padding-top:10px;border-top:1px solid var(--line)' : '') });
+                    row.appendChild(h('span', { style: 'font-size:1.1rem;min-width:26px;text-align:center' }, ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][idx]));
+                    const info = h('div', { style: 'flex:1;min-width:0' });
+                    info.appendChild(h('div', { style: 'font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }, x.name));
+                    const barEl = h('div', { class: 'bar', style: 'margin:4px 0 0;height:7px' });
+                    barEl.appendChild(h('i', { style: 'width:' + pct + '%' }));
+                    info.appendChild(barEl);
+                    row.appendChild(info);
+                    row.appendChild(h('span', { style: 'font-weight:800;color:var(--pine);font-size:.9rem;flex-shrink:0' }, pct + '%'));
+                    return row;
+                  })
+                )
+              );
+            }
+          }
+        }
+
+        // 6. Render Progress/Lag Report Card
+        const repCard = h('div', { class: 'progress-card' },
+          h('div', { class: 'progress-head' },
+            h('div', { class: 'progress-title' }, statusTitle),
+            statusChip
+          ),
+          h('div', { class: 'progress-desc' }, statusDesc),
+          extraReportEl
+        );
+        p.append(repCard);
+
+        // 7. Render 3 Summary Metric Cards
+        const summRow = h('div', { style: 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px' });
+        summCards.forEach(([v, l]) => {
+          summRow.appendChild(h('div', { class: 'card', style: 'text-align:center;padding:12px 6px' },
+            h('div', { style: 'font-size:1.25rem;font-weight:800;color:var(--pine);line-height:1.2' }, v),
+            h('div', { style: 'font-size:.72rem;color:var(--ink2);margin-top:4px;font-weight:600' }, l)
+          ));
+        });
+        p.append(summRow);
+
+        // 8. Render Chart Bars
+        const maxVal = Math.max(1, ...buckets.map(b => b.val || 0));
+        const barsEl = h('div', { class: 'chart-bars' });
+        buckets.forEach(b => {
+          const col = h('div', { class: 'chart-col' });
+          col.appendChild(h('div', { class: 'chart-pct' }, b.displayVal || ''));
+          const bw = h('div', { class: 'chart-bar-wrap' });
+          const bar = h('div', { class: 'chart-bar' + (!b.hasData || b.val === 0 ? ' zero' : '') });
+          if (b.isToday) bar.style.background = 'var(--saffron)';
+          const hPct = b.hasData ? Math.max(4, Math.round(b.val / (isUnitsMode ? maxVal : 100) * 100)) : 4;
+          bar.style.height = hPct + '%';
+          bw.appendChild(bar);
+          col.appendChild(bw);
+          const lblEl = h('div', { class: 'chart-lbl' }, b.label);
+          if (b.subLabel && UI.chartRange === 'week') {
+            lblEl.appendChild(h('b', { style: 'display:block;font-size:.65rem' }, b.subLabel));
+          }
+          col.appendChild(lblEl);
+          barsEl.appendChild(col);
+        });
         p.append(barsEl);
+
+        // 9. Legend
         const legend = h('div', { class: 'chart-legend' });
-        legend.appendChild(h('span', null, h('i', { style: 'background:var(--pine)' }), h('span', null, 'الإنجاز')));
+        legend.appendChild(h('span', null, h('i', { style: 'background:var(--pine)' }), h('span', null, isUnitsMode ? 'الوحدات المنجزة' : 'الإنجاز')));
         legend.appendChild(h('span', null, h('i', { style: 'background:var(--saffron)' }), h('span', null, 'اليوم')));
         legend.appendChild(h('span', null, h('i', { style: 'background:var(--soft)' }), h('span', null, 'بدون بيانات')));
         p.append(legend);
-        if (valid.length) {
-          p.append(h('div', { class: 'sec' }, 'أكثر العناصر التزاماً'));
-          const iStats = {};
-          days.forEach(k => {
-            itemsOn(k).forEach(i => {
-              if (!iStats[i.id]) iStats[i.id] = { name: i.name, done: 0, due: 0 };
-              iStats[i.id].due++;
-              if (isDone(k, i.id)) iStats[i.id].done++;
-            });
-          });
-          const sorted = Object.keys(iStats).map(k => iStats[k]).filter(x => x.due >= 3).sort((a, b) => (b.done / b.due) - (a.done / a.due)).slice(0, 5);
-          if (sorted.length) {
-            const card = h('div', { class: 'card' });
-            sorted.forEach((x, idx) => {
-              const pct = Math.round(x.done / x.due * 100);
-              const row = h('div', { style: 'display:flex;align-items:center;gap:10px;' + (idx ? 'margin-top:10px;padding-top:10px;border-top:1px solid var(--line)' : '') });
-              row.appendChild(h('span', { style: 'font-size:1.1rem;min-width:26px;text-align:center' }, ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][idx]));
-              const info = h('div', { style: 'flex:1;min-width:0' });
-              info.appendChild(h('div', { style: 'font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' }, x.name));
-              const barEl = h('div', { class: 'bar', style: 'margin:4px 0 0;height:7px' });
-              barEl.appendChild(h('i', { style: 'width:' + pct + '%' }));
-              info.appendChild(barEl);
-              row.appendChild(info);
-              row.appendChild(h('span', { style: 'font-weight:800;color:var(--pine);font-size:.9rem;flex-shrink:0' }, pct + '%'));
-              card.appendChild(row);
-            });
-            p.append(card);
-          }
-        }
+
+        // 10. Breakdown section
+        if (breakdownSec) p.append(breakdownSec);
+
         return p;
       }
 
@@ -2161,6 +2760,11 @@
         const gs = h('select', { class: 'in' }, h('option', { value: '' }, 'لا شيء'), S.goals.map(g => h('option', { value: g.id }, g.name)));
         gs.value = d.goal || '';
         const since = h('input', { class: 'in', type: 'date', value: d.since || todayKey() });
+        const sinceHijri = h('div', { class: 'hint', style: 'margin-top:4px;font-size:.78rem;color:var(--pine);font-weight:600' });
+        const updateSinceHijri = () => { sinceHijri.textContent = since.value ? ('الموافق هجرياً: ' + fmtHijri(since.value, true)) : ''; };
+        since.addEventListener('input', updateSinceHijri);
+        since.addEventListener('change', updateSinceHijri);
+        updateSinceHijri();
         const err = h('div', { class: 'err', role: 'alert' });
         const doSave = () => {
           const nm = name.value.trim();
@@ -2205,7 +2809,7 @@
           h('div', { class: 'two' }, field('من', st, 'وقت البداية|اكتب وقت البداية. سيب فاضي لو مش مربوط بساعة.'), field('إلى', en, 'وقت النهاية|اكتب وقت النهاية. اختياري.')),
           h('p', { class: 'hint' }, 'سيب الوقت فاضي لو العنصر مش مربوط بساعة معينة.'),
           field('يزوّد هدف لما تعلّم عليه', gs, 'ربط بهدف|لو العنصر ده جزء من هدف أكبر اربطه بالهدف وهيتحسب تلقائياً.'),
-          field('يبدأ من تاريخ', since, 'تاريخ البداية|مفيدة لو حابب تبدأ العنصر من تاريخ مستقبلي.'),
+          field('يبدأ من تاريخ', h('div', null, since, sinceHijri), 'تاريخ البداية|مفيدة لو حابب تبدأ العنصر من تاريخ مستقبلي.'),
           err
         ].filter(Boolean), foot);
       }
@@ -2219,7 +2823,17 @@
         const target = h('input', { class: 'in', type: 'number', inputmode: 'decimal', min: '0', placeholder: 'مثال: 16', value: d.target || '' });
         const current = h('input', { class: 'in', type: 'number', inputmode: 'decimal', value: String(cur) });
         const start = h('input', { class: 'in', type: 'date', value: d.start || todayKey() });
+        const startHijri = h('div', { class: 'hint', style: 'margin-top:4px;font-size:.78rem;color:var(--pine);font-weight:600' });
+        const updateStartHijri = () => { startHijri.textContent = start.value ? ('الموافق هجرياً: ' + fmtHijri(start.value, true)) : ''; };
+        start.addEventListener('input', updateStartHijri);
+        start.addEventListener('change', updateStartHijri);
+        updateStartHijri();
         const dl = h('input', { class: 'in', type: 'date', value: d.deadline || '' });
+        const dlHijri = h('div', { class: 'hint', style: 'margin-top:4px;font-size:.78rem;color:var(--pine);font-weight:600' });
+        const updateDlHijri = () => { dlHijri.textContent = dl.value ? ('الموافق هجرياً: ' + fmtHijri(dl.value, true)) : ''; };
+        dl.addEventListener('input', updateDlHijri);
+        dl.addEventListener('change', updateDlHijri);
+        updateDlHijri();
         const weekly = h('input', { class: 'in', type: 'number', inputmode: 'decimal', min: '0', placeholder: 'مثال: 10', value: d.weekly || '' });
         const group = h('input', { class: 'in', type: 'text', placeholder: 'مثال: المرحلة الأولى', value: d.group || '' });
         const out = h('textarea', { class: 'in', rows: '2', placeholder: 'إيه اللي هيبقى في إيدك لما تخلص؟' }); out.value = d.outcome || '';
@@ -2245,7 +2859,7 @@
           field('الاسم', name, 'اسم الهدف|مثال: حفظ جزء عم أو إتمام دورة البرمجة. اجعله واضحاً ومحفزاً.'),
           h('div', { class: 'two' }, field('الوحدة', unit, 'الوحدة|وحدة قياس الهدف. مثال: صفحة، درس، ساعة.'), field('الرقم المستهدف', target, 'الرقم المستهدف|كم عدد الوحدات التي تريد إنجازها؟')),
           field('الرقم الحالي', current, 'الرقم الحالي|لو كنت بدأت قبل كده اكتب الرقم اللي وصلته.'),
-          h('div', { class: 'two' }, field('تاريخ البداية', start, 'تاريخ البداية|امتى بدأت أو هتبدأ؟'), field('الموعد النهائي', dl, 'الموعد النهائي|امتى لازم يخلص الهدف؟ اختياري.')),
+          h('div', { class: 'two' }, field('تاريخ البداية', h('div', null, start, startHijri), 'تاريخ البداية|امتى بدأت أو هتبدأ؟'), field('الموعد النهائي', h('div', null, dl, dlHijri), 'الموعد النهائي|امتى لازم يخلص الهدف؟ اختياري.')),
           field('هدف أسبوعي (اختياري)', weekly, 'الهدف الأسبوعي|كم وحدة تريد إنجازها كل أسبوع؟'),
           field('المرحلة (اختياري)', group, 'المرحلة|قسّم أهدافك لمراحل. مثال: المرحلة الأولى.'),
           field('المخرج النهائي (اختياري)', out, 'المخرج النهائي|إيه اللي هيبقى في إيدك لما تخلص الهدف ده؟'),
@@ -2338,10 +2952,15 @@
       function viewToday() {
         const k = UI.date, items = itemsOn(k), done = items.filter(i => isDone(k, i.id)).length, isToday = k === todayKey();
         const p = h('div', { class: 'page' });
+        const hijriToday = fmtHijri(k, true);
         p.append(h('div', { class: 'datenav' },
           h('button', { class: 'icon-btn', 'aria-label': 'اليوم السابق', onclick: () => { UI.date = key(addDays(parse(k), -1)); render(); } }, icon('chevR')),
-          h('div', { class: 'datetxt' }, h('div', { class: 'dt-main' }, fmtFull(k)),
-            isToday ? h('div', { class: 'dt-sub' }, 'اليوم') : h('button', { class: 'link', onclick: () => { UI.date = todayKey(); render(); } }, 'ارجع لليوم')),
+          h('div', { class: 'datetxt' },
+            h('div', { class: 'dt-main' }, fmtFull(k)),
+            h('div', { class: 'dt-sub', style: 'margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px' },
+              hijriToday ? h('span', { class: 'dt-hijri' }, hijriToday) : null,
+              isToday ? h('span', null, '· اليوم') : h('button', { class: 'link', onclick: () => { UI.date = todayKey(); render(); } }, '· ارجع لليوم')
+            )),
           h('button', { class: 'icon-btn', 'aria-label': 'اليوم التالي', onclick: () => { UI.date = key(addDays(parse(k), 1)); render(); } }, icon('chevL'))));
         if (!S.items.length && !S.goals.length) {
           p.append(h('div', { class: 'empty' }, h('h2', null, 'ابدأ بأول عنصر'),
@@ -2406,8 +3025,8 @@
         const lines = [];
         if (g.target && !o.done) {
           lines.push('المتبقي ' + num(o.remaining) + ' ' + g.unit);
-          if (o.need) lines.push('محتاج ' + num(o.need) + ' ' + g.unit + ' في اليوم لحد ' + fmtDate(g.deadline));
-          if (o.eta) lines.push('بالسرعة الحالية هتخلص ' + fmtDate(o.eta));
+          if (o.need) lines.push('محتاج ' + num(o.need) + ' ' + g.unit + ' في اليوم لحد ' + fmtDateWithHijri(g.deadline));
+          if (o.eta) lines.push('بالسرعة الحالية هتخلص ' + fmtDateWithHijri(o.eta));
         }
         if (g.weekly) { lines.push('الأسبوع ده: ' + num(goalCount(g, wk[0], wk[6])) + ' من ' + g.weekly + ' ' + g.unit); }
         return h('div', { class: 'card' },
@@ -2449,10 +3068,24 @@
       function viewWeek() {
         const days = weekDays(UI.anchor), t = todayKey();
         const p = h('div', { class: 'page' });
+        const d0 = parse(days[0]), d6 = parse(days[6]);
+        const gregWeek = d0.getFullYear() === d6.getFullYear()
+          ? (d0.getDate() + ' ' + MONTHS[d0.getMonth()] + ' إلى ' + d6.getDate() + ' ' + MONTHS[d6.getMonth()] + ' ' + d6.getFullYear() + ' م')
+          : (fmtDate(days[0], true) + ' إلى ' + fmtDate(days[6], true));
+        const h0 = getHijri(days[0]), h6 = getHijri(days[6]);
+        const hijriWeek = (h0 && h6)
+          ? (h0.year === h6.year
+            ? (h0.day + ' ' + h0.monthName + ' إلى ' + h6.day + ' ' + h6.monthName + ' ' + h6.year + ' هـ')
+            : (fmtHijri(days[0], true) + ' إلى ' + fmtHijri(days[6], true)))
+          : '';
         p.append(h('div', { class: 'datenav' },
           h('button', { class: 'icon-btn', 'aria-label': 'الأسبوع السابق', onclick: () => { UI.anchor = key(addDays(parse(days[0]), -7)); render(); } }, icon('chevR')),
-          h('div', { class: 'datetxt' }, h('div', { class: 'dt-main' }, fmtDate(days[0]) + ' إلى ' + fmtDate(days[6])),
-            days.includes(t) ? h('div', { class: 'dt-sub' }, 'الأسبوع ده') : h('button', { class: 'link', onclick: () => { UI.anchor = t; render(); } }, 'ارجع للأسبوع ده')),
+          h('div', { class: 'datetxt' },
+            h('div', { class: 'dt-main' }, gregWeek),
+            h('div', { class: 'dt-sub', style: 'margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px' },
+              hijriWeek ? h('span', { class: 'dt-hijri' }, hijriWeek) : null,
+              days.includes(t) ? h('span', null, '· الأسبوع ده') : h('button', { class: 'link', onclick: () => { UI.anchor = t; render(); } }, '· ارجع للأسبوع ده')
+            )),
           h('button', { class: 'icon-btn', 'aria-label': 'الأسبوع التالي', onclick: () => { UI.anchor = key(addDays(parse(days[0]), 7)); render(); } }, icon('chevL'))));
         const sched = S.items.filter(i => days.some(k => runsOn(i, k))).sort(cmpItems);
         let due = 0, did = 0;
