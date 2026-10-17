@@ -8,8 +8,13 @@
   <meta name="color-scheme" content="light dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="محاسبتي">
   <meta name="format-detection" content="telephone=no">
   <title>محاسبتي</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <style>
     /* --- benefit banner slider --- */
     .benefit-banner {
@@ -2135,6 +2140,16 @@
       function readText(f) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = no; r.readAsText(f); }); }
       function fallbackDownload(name, text, type) {
         try {
+          const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          if (isIOS && navigator.canShare && navigator.share) {
+            try {
+              const file = new File([text], name, { type: type || 'application/octet-stream' });
+              if (navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], title: name }).catch(() => {});
+                return;
+              }
+            } catch (err) { }
+          }
           const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: type || 'application/octet-stream' })), download: name });
           document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
         } catch (e) { }
