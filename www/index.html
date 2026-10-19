@@ -858,6 +858,118 @@
       color: var(--pine-ink)
     }
 
+    .chk.part {
+      background: rgba(30, 91, 78, .12);
+      border-color: var(--pine);
+      color: var(--pine);
+      font-weight: 800;
+      font-size: .72rem
+    }
+
+    .item-meas-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      margin-top: 4px;
+      transition: all .15s
+    }
+
+    .item-meas-badge:active {
+      transform: scale(.97);
+      background: var(--line)
+    }
+
+    .item-meas-badge.part {
+      background: rgba(201, 127, 18, .12);
+      border-color: var(--saffron);
+      color: var(--saffron)
+    }
+
+    .item-meas-badge.full {
+      background: rgba(44, 138, 108, .12);
+      border-color: var(--ok);
+      color: var(--ok)
+    }
+
+    .meas-mini-bar {
+      display: inline-block;
+      width: 32px;
+      height: 5px;
+      border-radius: 99px;
+      background: var(--line);
+      overflow: hidden;
+      vertical-align: middle
+    }
+
+    .meas-mini-bar>i {
+      display: block;
+      height: 100%;
+      background: var(--pine);
+      border-radius: 99px
+    }
+
+    .item-meas-badge.part .meas-mini-bar>i {
+      background: var(--saffron)
+    }
+
+    .item-meas-badge.full .meas-mini-bar>i {
+      background: var(--ok)
+    }
+
+    .quick-chip {
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .quick-chip:active {
+      background: var(--pine);
+      color: var(--pine-ink);
+      border-color: var(--pine)
+    }
+
+    .segmented-ctrl {
+      display: flex;
+      background: var(--soft);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px
+    }
+
+    .segmented-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 9px;
+      border: none;
+      background: none;
+      font-weight: 700;
+      font-size: .88rem;
+      color: var(--ink2);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center
+    }
+
+    .segmented-btn.active {
+      background: var(--surface);
+      color: var(--pine);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .08)
+    }
+
     .item-body {
       flex: 1;
       min-width: 0;
@@ -1127,6 +1239,14 @@
       background: var(--pine);
       border-color: var(--pine);
       color: var(--pine-ink)
+    }
+
+    .cell.part {
+      background: rgba(30, 91, 78, .15);
+      border-color: var(--pine);
+      color: var(--pine);
+      font-weight: 800;
+      font-size: .68rem
     }
 
     .cell.miss {
@@ -1590,10 +1710,10 @@
       const QUICK_LISTS = [
         {
           id: 'quran', icon: '📖', name: 'القرآن الكريم', items: [
-            { name: 'ورد القرآن اليومي', days: [0, 1, 2, 3, 4, 5, 6], start: '07:00', end: '07:45' },
-            { name: 'المراجعة اليومية', days: [0, 1, 2, 3, 4, 5, 6], start: '20:00', end: '20:30' },
+            { name: 'ورد القرآن اليومي', days: [0, 1, 2, 3, 4, 5, 6], start: '07:00', end: '07:45', target: 1, unit: 'جزء' },
+            { name: 'المراجعة اليومية', days: [0, 1, 2, 3, 4, 5, 6], start: '20:00', end: '20:30', target: 5, unit: 'صفحات' },
             { name: 'تلاوة الفجر', days: [0, 1, 2, 3, 4, 5, 6], start: '05:45', end: '06:15' },
-            { name: 'حفظ آيات جديدة', days: [0, 1, 2, 3, 4, 5, 6], start: '08:00', end: '08:30' },
+            { name: 'حفظ آيات جديدة', days: [0, 1, 2, 3, 4, 5, 6], start: '08:00', end: '08:30', target: 5, unit: 'آيات' },
           ]
         },
         {
@@ -1611,12 +1731,12 @@
             { name: 'أذكار المساء', days: [0, 1, 2, 3, 4, 5, 6], start: '16:00', end: '16:20' },
             { name: 'أذكار النوم', days: [0, 1, 2, 3, 4, 5, 6], start: '22:00', end: '22:10' },
             { name: 'الأذكار بعد الصلوات', days: [0, 1, 2, 3, 4, 5, 6] },
-            { name: '100 تسبيحة يومياً', days: [0, 1, 2, 3, 4, 5, 6] },
+            { name: '100 تسبيحة يومياً', days: [0, 1, 2, 3, 4, 5, 6], target: 100, unit: 'تسبيحة' },
           ]
         },
         {
           id: 'islamic', icon: '📚', name: 'العلوم الشرعية', items: [
-            { name: 'قراءة في كتاب شرعي', days: [0, 1, 2, 3, 4, 5, 6], start: '21:00', end: '21:30' },
+            { name: 'قراءة في كتاب شرعي', days: [0, 1, 2, 3, 4, 5, 6], start: '21:00', end: '21:30', target: 30, unit: 'دقيقة' },
             { name: 'حضور درس الشيخ', days: [4], start: '20:00', end: '21:30' },
             { name: 'مراجعة محاضرات دينية', days: [5, 6], start: '10:00', end: '11:00' },
             { name: 'تعلم مسألة فقهية يومياً', days: [0, 1, 2, 3, 4, 5, 6] },
@@ -1625,9 +1745,9 @@
         },
         {
           id: 'nawafil', icon: '🌙', name: 'النوافل والسنن', items: [
-            { name: 'قيام الليل', days: [0, 1, 2, 3, 4, 5, 6], start: '03:30', end: '04:30' },
-            { name: 'صلاة الضحى', days: [0, 1, 2, 3, 4, 5, 6], start: '09:00', end: '09:15' },
-            { name: 'السنن الرواتب', days: [0, 1, 2, 3, 4, 5, 6] },
+            { name: 'قيام الليل', days: [0, 1, 2, 3, 4, 5, 6], start: '03:30', end: '04:30', target: 60, unit: 'دقيقة' },
+            { name: 'صلاة الضحى', days: [0, 1, 2, 3, 4, 5, 6], start: '09:00', end: '09:15', target: 2, unit: 'ركعات' },
+            { name: 'السنن الرواتب', days: [0, 1, 2, 3, 4, 5, 6], target: 12, unit: 'ركعة' },
             { name: 'صيام الاثنين والخميس', days: [1, 4] },
           ]
         },
@@ -2005,7 +2125,7 @@
       function normalize(d) {
         const s = Object.assign(blank(), d || {});
         s.settings = Object.assign({ weekStart: 6, timeMode: 'winter', hijriAdjust: 0 }, s.settings || {});
-        s.items = (s.items || []).map(i => Object.assign({ id: uid(), name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: null, since: '' }, i));
+        s.items = (s.items || []).map(i => Object.assign({ id: uid(), name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: null, since: '', target: 0, unit: '' }, i));
         s.goals = (s.goals || []).map(g => Object.assign({ id: uid(), name: '', unit: '', target: 0, start: todayKey(), deadline: '', weekly: 0, group: '', outcome: '', entries: [] }, g));
         s.log = s.log || {}; s.reviews = s.reviews || {};
         return s;
@@ -2082,10 +2202,37 @@
         }, 100);
       }
       const itemsOn = k => S.items.filter(i => runsOn(i, k)).sort(cmpItems);
-      const isDone = (k, id) => !!(S.log[k] && S.log[k][id]);
+      const getItemVal = (k, id) => {
+        if (!S.log[k] || S.log[k][id] == null) return 0;
+        const v = Number(S.log[k][id]);
+        return isNaN(v) ? 0 : v;
+      };
+      const getItemProgress = (k, it) => {
+        const v = getItemVal(k, it.id);
+        if (!it.target || it.target <= 0) return v > 0 ? 1 : 0;
+        return Math.min(1, v / it.target);
+      };
+      const isItemDone = (k, it) => {
+        if (!it.target || it.target <= 0) return getItemVal(k, it.id) > 0;
+        return getItemVal(k, it.id) >= it.target;
+      };
+      const isDone = (k, id) => {
+        const it = S.items.find(i => i.id === id);
+        return it ? isItemDone(k, it) : (getItemVal(k, id) > 0);
+      };
       function toggle(k, id) {
         S.log[k] = S.log[k] || {};
-        if (S.log[k][id]) delete S.log[k][id]; else S.log[k][id] = 1;
+        const it = S.items.find(i => i.id === id);
+        if (it && it.target > 0) {
+          const cur = getItemVal(k, id);
+          if (cur >= it.target) {
+            delete S.log[k][id];
+          } else {
+            S.log[k][id] = it.target;
+          }
+        } else {
+          if (S.log[k][id]) delete S.log[k][id]; else S.log[k][id] = 1;
+        }
         if (!Object.keys(S.log[k]).length) delete S.log[k];
         save();
       }
@@ -2101,12 +2248,21 @@
       function goalCount(g, from, to) {
         let n = 0;
         g.entries.forEach(function (e) { if ((!from || e.d >= from) && (!to || e.d <= to)) n += e.n; });
-        const ids = new Set(S.items.filter(i => i.goal === g.id).map(i => i.id));
-        if (ids.size) for (const k in S.log) {
-          if ((from && k < from) || (to && k > to)) continue;
-          for (const id in S.log[k]) if (ids.has(id)) n++;
+        const linkedItems = S.items.filter(i => i.goal === g.id);
+        if (linkedItems.length) {
+          for (const k in S.log) {
+            if ((from && k < from) || (to && k > to)) continue;
+            linkedItems.forEach(i => {
+              if (S.log[k] && S.log[k][i.id] != null) {
+                const v = Number(S.log[k][i.id]);
+                if (!isNaN(v) && v > 0) {
+                  n += (i.target > 0 ? v : 1);
+                }
+              }
+            });
+          }
         }
-        return n;
+        return Math.round(n * 100) / 100;
       }
       function pace(g) {
         const total = goalCount(g), t = todayKey(), o = { total };
@@ -2128,7 +2284,14 @@
         const it = S.items.find(i => i.id === id); if (!it) return;
         const g = it.goal && S.goals.find(x => x.id === it.goal);
         Object.keys(S.log).forEach(function (k) {
-          if (S.log[k] && S.log[k][id]) { if (g) g.entries.push({ d: k, n: 1 }); delete S.log[k][id]; if (S.log[k] && !Object.keys(S.log[k]).length) delete S.log[k]; }
+          if (S.log[k] && S.log[k][id] != null) {
+            if (g) {
+              const val = (it.target > 0) ? getItemVal(k, id) : 1;
+              if (val > 0) g.entries.push({ d: k, n: val });
+            }
+            delete S.log[k][id];
+            if (S.log[k] && !Object.keys(S.log[k]).length) delete S.log[k];
+          }
         });
         S.items = S.items.filter(i => i.id !== id);
       }
@@ -2309,6 +2472,121 @@
         openSheet(isWeek ? 'الذهاب لأسبوع معين' : 'الذهاب ليوم معين', body, foot);
       }
 
+      /* ---------- تسجيل إنجاز المهام المقاسة (الوقت / الكمية) ---------- */
+      function openItemProgressSheet(k, it) {
+        const currentVal = getItemVal(k, it.id);
+        const target = it.target || 1;
+        const unit = it.unit || '';
+
+        const inp = h('input', {
+          class: 'in',
+          type: 'number',
+          inputmode: 'decimal',
+          step: 'any',
+          min: '0',
+          value: currentVal ? String(currentVal) : '',
+          placeholder: '0',
+          style: 'font-size:1.4rem;text-align:center;font-weight:800;color:var(--pine)'
+        });
+
+        const pctLabel = h('div', {
+          class: 'hint',
+          style: 'text-align:center;font-size:.9rem;font-weight:700;margin-top:6px;color:var(--ink2)'
+        });
+
+        const updatePct = () => {
+          const v = parseFloat(inp.value) || 0;
+          const p = Math.round((v / target) * 100);
+          pctLabel.textContent = v > 0
+            ? ('الإنجاز: ' + num(v) + ' من ' + num(target) + ' ' + unit + ' (' + p + '%)')
+            : ('المستهدف اليومي: ' + num(target) + ' ' + unit);
+        };
+        inp.oninput = updatePct;
+        inp.onchange = updatePct;
+        updatePct();
+
+        const chipsWrap = h('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:16px 0 8px' });
+        const addChip = (label, val) => {
+          chipsWrap.appendChild(h('button', {
+            type: 'button',
+            class: 'quick-chip',
+            onclick: () => {
+              inp.value = String(val);
+              updatePct();
+            }
+          }, label));
+        };
+
+        const quarters = [
+          { label: '¼ ربع (' + num(target * 0.25) + ')', val: Math.round(target * 0.25 * 100) / 100 },
+          { label: '½ نصف (' + num(target * 0.5) + ')', val: Math.round(target * 0.5 * 100) / 100 },
+          { label: '¾ ثلاثة أرباع (' + num(target * 0.75) + ')', val: Math.round(target * 0.75 * 100) / 100 },
+          { label: '✓ بالكامل (' + num(target) + ')', val: target },
+          { label: 'تصفير (0)', val: 0 }
+        ];
+        quarters.forEach(q => addChip(q.label, q.val));
+
+        const stepperRow = h('div', { style: 'display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px' },
+          h('button', {
+            type: 'button',
+            class: 'btn',
+            style: 'min-height:42px;padding:6px 16px;font-size:1.3rem;font-weight:800',
+            onclick: () => {
+              const cur = parseFloat(inp.value) || 0;
+              const step = target <= 5 ? 0.25 : target <= 20 ? 1 : 5;
+              const nxt = Math.max(0, Math.round((cur - step) * 100) / 100);
+              inp.value = nxt ? String(nxt) : '0';
+              updatePct();
+            }
+          }, '-'),
+          inp,
+          h('button', {
+            type: 'button',
+            class: 'btn',
+            style: 'min-height:42px;padding:6px 16px;font-size:1.3rem;font-weight:800',
+            onclick: () => {
+              const cur = parseFloat(inp.value) || 0;
+              const step = target <= 5 ? 0.25 : target <= 20 ? 1 : 5;
+              const nxt = Math.round((cur + step) * 100) / 100;
+              inp.value = String(nxt);
+              updatePct();
+            }
+          }, '+')
+        );
+
+        const body = [
+          h('div', { style: 'text-align:center;padding:4px 0 10px' },
+            h('div', { style: 'font-weight:800;font-size:1.15rem;color:var(--ink)' }, it.name),
+            h('div', { class: 'hint', style: 'margin-top:2px' }, 'سجّل المقدار المنجز لهذا اليوم (' + fmtFull(k, false) + ')')
+          ),
+          stepperRow,
+          pctLabel,
+          chipsWrap
+        ];
+
+        const foot = [
+          h('button', {
+            class: 'btn primary',
+            onclick: () => {
+              const val = parseFloat(inp.value) || 0;
+              S.log[k] = S.log[k] || {};
+              if (val <= 0) {
+                delete S.log[k][it.id];
+                if (!Object.keys(S.log[k]).length) delete S.log[k];
+              } else {
+                S.log[k][it.id] = Math.round(val * 100) / 100;
+              }
+              save();
+              closeSheet();
+              render();
+            }
+          }, 'حفظ الإنجاز'),
+          h('button', { class: 'btn', onclick: closeSheet }, 'إلغاء')
+        ];
+
+        openSheet('تسجيل الإنجاز: ' + it.name, body, foot);
+      }
+
       /* ---------- قوائم إسلامية ---------- */
       function openQuickListsSheet() {
         const grid = h('div', { class: 'qlist-grid' });
@@ -2366,7 +2644,7 @@
               ql.items.forEach(item => {
                 const start = delta && item.start ? shiftHour(item.start, delta) : item.start;
                 const end = delta && item.end ? shiftHour(item.end, delta) : item.end;
-                S.items.push(Object.assign({ id: uid(), goal: null, since: t }, item, { start, end }));
+                S.items.push(Object.assign({ id: uid(), goal: null, since: t, target: 0, unit: '' }, item, { start, end }));
               });
               save(); closeSheet(); UI.tab = 'today'; render();
             }
@@ -2379,8 +2657,14 @@
       function getDayStats(k) {
         const items = itemsOn(k);
         if (!items.length) return null;
-        const done = items.filter(i => isDone(k, i.id)).length;
-        return { done, total: items.length, pct: Math.round(done / items.length * 100) };
+        let progSum = 0, fullDone = 0;
+        items.forEach(i => {
+          const p = getItemProgress(k, i);
+          progSum += p;
+          if (isItemDone(k, i)) fullDone++;
+        });
+        const pct = Math.min(100, Math.round((progSum / items.length) * 100));
+        return { done: fullDone, progSum: Math.round(progSum * 10) / 10, total: items.length, pct };
       }
       function openCustomStatsSheet() {
         const selected = new Set(UI.chartCustomIds || []);
@@ -2406,8 +2690,9 @@
             const iid = 'item:' + it.id;
             const chk = h('input', { type: 'checkbox', id: 'c_i_' + it.id, checked: selected.has(iid), style: 'width:18px;height:18px;accent-color:var(--pine)' });
             chk.onchange = () => { if (chk.checked) selected.add(iid); else selected.delete(iid); };
+            const desc = it.target > 0 ? (' (' + num(it.target) + ' ' + (it.unit || '') + ')') : '';
             const lbl = h('label', { for: 'c_i_' + it.id, style: 'display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--line)' },
-              chk, h('span', { style: 'flex:1' }, it.name)
+              chk, h('span', { style: 'flex:1' }, it.name + desc)
             );
             body.append(lbl);
           });
@@ -2542,7 +2827,10 @@
         if (S.items.length) {
           const iGrp = h('optgroup', { label: '📋 المهام والعادات اليومية' });
           S.items.forEach(it => {
-            iGrp.appendChild(h('option', { value: 'item:' + it.id }, '📋 مهمة: ' + it.name));
+            const lbl = it.target > 0
+              ? ('📋 مهمة: ' + it.name + ' (' + num(it.target) + ' ' + (it.unit || '') + ')')
+              : ('📋 مهمة: ' + it.name);
+            iGrp.appendChild(h('option', { value: 'item:' + it.id }, lbl));
           });
           scopeSelect.appendChild(iGrp);
         }
@@ -2741,52 +3029,115 @@
 
         } else if (selectedItem) {
           const it = selectedItem;
-          let curDue = 0, curDone = 0;
-          days.forEach(k => { if (runsOn(it, k)) { curDue++; if (isDone(k, it.id)) curDone++; } });
+          const isMeas = it.target > 0;
+          let curDue = 0, curDone = 0, curUnits = 0;
+          days.forEach(k => {
+            if (runsOn(it, k)) {
+              curDue++;
+              curDone += getItemProgress(k, it);
+              curUnits += getItemVal(k, it.id);
+            }
+          });
           const curPct = curDue ? Math.round(curDone / curDue * 100) : 0;
 
-          let prevDue = 0, prevDone = 0;
-          prevDays.forEach(k => { if (runsOn(it, k)) { prevDue++; if (isDone(k, it.id)) prevDone++; } });
+          let prevDue = 0, prevDone = 0, prevUnits = 0;
+          prevDays.forEach(k => {
+            if (runsOn(it, k)) {
+              prevDue++;
+              prevDone += getItemProgress(k, it);
+              prevUnits += getItemVal(k, it.id);
+            }
+          });
           const prevPct = prevDue ? Math.round(prevDone / prevDue * 100) : 0;
           const delta = curPct - prevPct;
+          const unitDiff = Math.round((curUnits - prevUnits) * 100) / 100;
+          const dailyRate = Math.round((curUnits / days.length) * 100) / 100;
 
-          buckets.forEach(b => {
-            let bDue = 0, bDone = 0;
-            b.days.forEach(k => { if (runsOn(it, k)) { bDue++; if (isDone(k, it.id)) bDone++; } });
-            b.val = bDue ? Math.round(bDone / bDue * 100) : 0;
-            b.hasData = bDue > 0;
-            b.displayVal = bDue > 0 ? (b.val + '%') : '';
-          });
+          if (isMeas) {
+            isUnitsMode = true;
+            buckets.forEach(b => {
+              let sum = 0;
+              b.days.forEach(k => { if (runsOn(it, k)) sum += getItemVal(k, it.id); });
+              b.val = Math.round(sum * 100) / 100;
+              b.hasData = sum > 0;
+              b.displayVal = sum > 0 ? (num(b.val) + ' ' + (it.unit || '')) : '';
+            });
 
-          statusTitle = '📋 التزام مهمة: ' + it.name;
+            statusTitle = '📊 إنجاز مهمة: ' + it.name;
+            const targetUnits = Math.round(curDue * it.target * 100) / 100;
 
-          if (!prevDue) {
-            statusChip = h('span', { class: 'pill ok' }, curPct + '% التزام');
-            statusDesc = 'نسبة التزامك بمهمة "' + it.name + '" في هذه الفترة هي ' + curPct + '% (' + curDone + ' من ' + curDue + ' يوم مجدول).';
-          } else if (delta > 0) {
-            statusChip = h('span', { class: 'pill ok' }, '📈 متقدم (+' + delta + '%)');
-            statusDesc = 'أداؤك في تقدم ملحوظ! تحسن التزامك بنسبة +' + delta + '% مقارنة بالفترة السابقة المماثلة (ارتفع من ' + prevPct + '% إلى ' + curPct + '%).';
-          } else if (delta < 0) {
-            statusChip = h('span', { class: 'pill bad' }, '📉 متأخر (' + delta + '%)');
-            statusDesc = 'تراجع التزامك بمهمة "' + it.name + '" بنسبة ' + Math.abs(delta) + '% مقارنة بالفترة السابقة المماثلة (انخفض من ' + prevPct + '% إلى ' + curPct + '%). حاول العودة للالتزام اليومي.';
+            if (curPct >= 100) {
+              statusChip = h('span', { class: 'pill ok' }, 'إنجاز ممتاز (' + curPct + '%) 🎉');
+              statusDesc = 'ما شاء الله! حققت المستهدف بالكامل وزيادة، بإجمالي ' + num(curUnits) + ' ' + (it.unit || '') + ' من أصل ' + num(targetUnits) + ' ' + (it.unit || '') + ' مجدولة لهذه الفترة.';
+            } else if (!prevDue) {
+              statusChip = h('span', { class: 'pill ok' }, curPct + '% إنجاز');
+              statusDesc = 'أنجزت ' + num(curUnits) + ' من أصل ' + num(targetUnits) + ' ' + (it.unit || '') + ' في هذه الفترة (' + curPct + '% من المستهدف بمعدل ' + num(dailyRate) + ' ' + (it.unit || '') + '/يوم).';
+            } else if (unitDiff > 0) {
+              statusChip = h('span', { class: 'pill ok' }, '📈 في ازدياد (+' + num(unitDiff) + ' ' + (it.unit || '') + ')');
+              statusDesc = 'إنجازك في ازدياد! أنجزت ' + num(curUnits) + ' ' + (it.unit || '') + ' بزيادة +' + num(unitDiff) + ' ' + (it.unit || '') + ' عن الفترة السابقة المماثلة (نسبة الإنجاز ' + curPct + '%).';
+            } else if (unitDiff < 0) {
+              statusChip = h('span', { class: 'pill bad' }, '📉 تراجع (' + num(unitDiff) + ' ' + (it.unit || '') + ')');
+              statusDesc = 'تراجع إنجازك إلى ' + num(curUnits) + ' ' + (it.unit || '') + ' بانخفاض ' + num(Math.abs(unitDiff)) + ' ' + (it.unit || '') + ' مقارنة بالفترة السابقة المماثلة. حاول العودة للوتيرة المطلوبة.';
+            } else {
+              statusChip = h('span', { class: 'pill' }, 'ثابت (' + curPct + '%)');
+              statusDesc = 'حققت ' + num(curUnits) + ' ' + (it.unit || '') + ' تماماً بنفس وتيرة الفترة السابقة المماثلة.';
+            }
+
+            extraReportEl = h('div', { class: 'progress-meta-row' },
+              h('span', { class: 'progress-meta-item' }, 'المستهدف اليومي: ' + num(it.target) + ' ' + (it.unit || '')),
+              h('span', { class: 'progress-meta-item' }, 'المعدل اليومي: ' + num(dailyRate) + ' ' + (it.unit || '') + '/يوم'),
+              h('span', { class: 'progress-meta-item' }, 'الأيام المتتالية: ' + streak(it) + ' يوم'),
+              it.goal ? (function () {
+                const g = S.goals.find(x => x.id === it.goal);
+                return g ? h('span', { class: 'progress-meta-item' }, 'مرتبطة بهدف: ' + g.name) : null;
+              })() : null
+            );
+
+            summCards = [
+              ['+' + num(curUnits) + ' ' + (it.unit || ''), 'إجمالي المنجز في الفترة'],
+              [curPct + '%', 'نسبة إنجاز المستهدف'],
+              [(unitDiff > 0 ? ('+' + num(unitDiff)) : (unitDiff < 0 ? num(unitDiff) : '0')) + ' ' + (it.unit || ''), 'عن الفترة السابقة']
+            ];
+
           } else {
-            statusChip = h('span', { class: 'pill' }, 'ثابت (' + curPct + '%)');
-            statusDesc = 'حافظت على نفس نسبة الالتزام (' + curPct + '%) تماماً مثل الفترة السابقة المماثلة.';
+            buckets.forEach(b => {
+              let bDue = 0, bDone = 0;
+              b.days.forEach(k => { if (runsOn(it, k)) { bDue++; if (isDone(k, it.id)) bDone++; } });
+              b.val = bDue ? Math.round(bDone / bDue * 100) : 0;
+              b.hasData = bDue > 0;
+              b.displayVal = bDue > 0 ? (b.val + '%') : '';
+            });
+
+            statusTitle = '📋 التزام مهمة: ' + it.name;
+
+            if (!prevDue) {
+              statusChip = h('span', { class: 'pill ok' }, curPct + '% التزام');
+              statusDesc = 'نسبة التزامك بمهمة "' + it.name + '" في هذه الفترة هي ' + curPct + '% (' + Math.round(curDone) + ' من ' + curDue + ' يوم مجدول).';
+            } else if (delta > 0) {
+              statusChip = h('span', { class: 'pill ok' }, '📈 متقدم (+' + delta + '%)');
+              statusDesc = 'أداؤك في تقدم ملحوظ! تحسن التزامك بنسبة +' + delta + '% مقارنة بالفترة السابقة المماثلة (ارتفع من ' + prevPct + '% إلى ' + curPct + '%).';
+            } else if (delta < 0) {
+              statusChip = h('span', { class: 'pill bad' }, '📉 متأخر (' + delta + '%)');
+              statusDesc = 'تراجع التزامك بمهمة "' + it.name + '" بنسبة ' + Math.abs(delta) + '% مقارنة بالفترة السابقة المماثلة (انخفض من ' + prevPct + '% إلى ' + curPct + '%). حاول العودة للالتزام اليومي.';
+            } else {
+              statusChip = h('span', { class: 'pill' }, 'ثابت (' + curPct + '%)');
+              statusDesc = 'حافظت على نفس نسبة الالتزام (' + curPct + '%) تماماً مثل الفترة السابقة المماثلة.';
+            }
+
+            extraReportEl = h('div', { class: 'progress-meta-row' },
+              h('span', { class: 'progress-meta-item' }, 'الأيام المتتالية الحالية: ' + streak(it) + ' يوم'),
+              it.goal ? (function () {
+                const g = S.goals.find(x => x.id === it.goal);
+                return g ? h('span', { class: 'progress-meta-item' }, 'مرتبطة بهدف: ' + g.name) : null;
+              })() : null
+            );
+
+            summCards = [
+              [curPct + '%', 'نسبة الالتزام'],
+              [Math.round(curDone) + ' / ' + curDue, 'أيام الإنجاز'],
+              [(delta > 0 ? ('+' + delta + '%') : (delta < 0 ? (delta + '%') : '0%')), 'عن الفترة السابقة']
+            ];
           }
-
-          extraReportEl = h('div', { class: 'progress-meta-row' },
-            h('span', { class: 'progress-meta-item' }, 'الأيام المتتالية الحالية: ' + streak(it) + ' يوم'),
-            it.goal ? (function () {
-              const g = S.goals.find(x => x.id === it.goal);
-              return g ? h('span', { class: 'progress-meta-item' }, 'مرتبطة بهدف: ' + g.name) : null;
-            })() : null
-          );
-
-          summCards = [
-            [curPct + '%', 'نسبة الالتزام'],
-            [curDone + ' / ' + curDue, 'أيام الإنجاز'],
-            [(delta > 0 ? ('+' + delta + '%') : (delta < 0 ? (delta + '%') : '0%')), 'عن الفترة السابقة']
-          ];
 
         } else if (isAllGoals) {
           isUnitsMode = true;
@@ -2849,13 +3200,13 @@
 
           let cDue = 0, cDone = 0;
           days.forEach(k => {
-            chosenItems.forEach(it => { if (runsOn(it, k)) { cDue++; if (isDone(k, it.id)) cDone++; } });
+            chosenItems.forEach(it => { if (runsOn(it, k)) { cDue++; cDone += getItemProgress(k, it); } });
           });
           const curPct = cDue ? Math.round(cDone / cDue * 100) : 0;
 
           let pDue = 0, pDone = 0;
           prevDays.forEach(k => {
-            chosenItems.forEach(it => { if (runsOn(it, k)) { pDue++; if (isDone(k, it.id)) pDone++; } });
+            chosenItems.forEach(it => { if (runsOn(it, k)) { pDue++; pDone += getItemProgress(k, it); } });
           });
           const prevPct = pDue ? Math.round(pDone / pDue * 100) : 0;
           const delta = curPct - prevPct;
@@ -2866,7 +3217,7 @@
           buckets.forEach(b => {
             let bDue = 0, bDone = 0;
             b.days.forEach(k => {
-              chosenItems.forEach(it => { if (runsOn(it, k)) { bDue++; if (isDone(k, it.id)) bDone++; } });
+              chosenItems.forEach(it => { if (runsOn(it, k)) { bDue++; bDone += getItemProgress(k, it); } });
             });
             b.val = bDue ? Math.round(bDone / bDue * 100) : 0;
             b.hasData = bDue > 0;
@@ -2939,7 +3290,7 @@
               itemsOn(k).forEach(i => {
                 if (!iStats[i.id]) iStats[i.id] = { name: i.name, done: 0, due: 0 };
                 iStats[i.id].due++;
-                if (isDone(k, i.id)) iStats[i.id].done++;
+                iStats[i.id].done += getItemProgress(k, i);
               });
             });
             const sorted = Object.keys(iStats).map(k => iStats[k]).filter(x => x.due >= 3).sort((a, b) => (b.done / b.due) - (a.done / a.due)).slice(0, 5);
@@ -3024,9 +3375,99 @@
 
       function itemEditor(it) {
         const isNew = !it;
-        const d = Object.assign({ name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: '', since: UI.tab === 'today' ? UI.date : todayKey() }, it || {});
+        const d = Object.assign({ name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: '', since: UI.tab === 'today' ? UI.date : todayKey(), target: 0, unit: '' }, it || {});
         const days = new Set(d.days);
         const name = h('input', { class: 'in', type: 'text', placeholder: 'مثال: ورد القرآن', value: d.name });
+
+        let itemType = (d.target && d.target > 0) ? 'measurable' : 'simple';
+
+        const targetInp = h('input', {
+          class: 'in',
+          type: 'number',
+          inputmode: 'decimal',
+          min: '0',
+          step: 'any',
+          placeholder: 'مثال: 1 أو 60',
+          value: d.target ? String(d.target) : ''
+        });
+
+        const unitInp = h('input', {
+          class: 'in',
+          type: 'text',
+          placeholder: 'مثال: جزء، صفحة، دقيقة، ركعة',
+          value: d.unit || ''
+        });
+
+        const measFieldsBox = h('div', {
+          style: (itemType === 'measurable' ? '' : 'display:none;') + 'margin-top:10px;padding:12px;background:var(--soft);border-radius:12px;border:1px solid var(--line)'
+        });
+
+        const presetUnits = [
+          { label: '📖 جزء', u: 'جزء', def: 1 },
+          { label: '📄 صفحة', u: 'صفحة', def: 10 },
+          { label: '⏱️ دقيقة', u: 'دقيقة', def: 30 },
+          { label: '⏳ ساعة', u: 'ساعة', def: 1 },
+          { label: '🕌 ركعة', u: 'ركعة', def: 2 },
+          { label: '📿 تسبيحة', u: 'تسبيحة', def: 100 },
+          { label: '📜 آية', u: 'آية', def: 20 },
+          { label: '📚 حديث', u: 'حديث', def: 3 }
+        ];
+
+        const presetChipsWrap = h('div', { style: 'display:flex;gap:5px;flex-wrap:wrap;margin-top:8px' });
+        presetUnits.forEach(pu => {
+          presetChipsWrap.appendChild(h('button', {
+            type: 'button',
+            class: 'quick-chip',
+            style: 'font-size:.76rem;padding:4px 8px',
+            onclick: () => {
+              unitInp.value = pu.u;
+              if (!targetInp.value || parseFloat(targetInp.value) <= 0) {
+                targetInp.value = String(pu.def);
+              }
+            }
+          }, pu.label));
+        });
+
+        measFieldsBox.append(
+          h('div', { class: 'two' },
+            field('المستهدف اليومي', targetInp, 'المستهدف|الكمية أو الوقت المطلوب إنجازه يومياً. مثال: 1 (لجزء واحد) أو 60 (لـ 60 دقيقة).'),
+            field('وحدة القياس', unitInp, 'الوحدة|وحدة القياس مثل: جزء، دقيقة، صفحة، ركعة، إلخ.')
+          ),
+          h('div', { style: 'margin-top:6px' },
+            h('div', { class: 'hint', style: 'font-size:.76rem;margin-bottom:4px' }, 'أو اختر وحدة شائعة بضغطة واحدة:'),
+            presetChipsWrap
+          )
+        );
+
+        const btnSimple = h('button', {
+          type: 'button',
+          class: 'segmented-btn' + (itemType === 'simple' ? ' active' : ''),
+          onclick: () => {
+            itemType = 'simple';
+            btnSimple.classList.add('active');
+            btnMeas.classList.remove('active');
+            measFieldsBox.style.display = 'none';
+          }
+        }, '✓ عادية (صح / خطأ)');
+
+        const btnMeas = h('button', {
+          type: 'button',
+          class: 'segmented-btn' + (itemType === 'measurable' ? ' active' : ''),
+          onclick: () => {
+            itemType = 'measurable';
+            btnMeas.classList.add('active');
+            btnSimple.classList.remove('active');
+            measFieldsBox.style.display = 'block';
+            if (!targetInp.value) targetInp.value = '1';
+            if (!unitInp.value) unitInp.value = 'جزء';
+          }
+        }, '⏱️ أو 📊 ذات كمية أو وقت');
+
+        const typeSelector = h('div', { style: 'margin:14px 0 16px' },
+          h('div', { class: 'f-lbl', style: 'margin-bottom:6px' }, 'طريقة متابعة المهمة'),
+          h('div', { class: 'segmented-ctrl' }, btnSimple, btnMeas),
+          measFieldsBox
+        );
 
         const allDays = [0, 1, 2, 3, 4, 5, 6];
         const isAll = allDays.every(n => days.has(n));
@@ -3087,8 +3528,15 @@
           if (!nm) { err.textContent = 'اكتب اسم العنصر.'; name.focus(); return null; }
           if (!days.size) { err.textContent = 'اختار يوم واحد على الأقل.'; return null; }
           if (en.value && !st.value) { err.textContent = 'اكتب وقت البداية قبل وقت النهاية.'; return null; }
+          const tVal = itemType === 'measurable' ? (parseFloat(targetInp.value) || 0) : 0;
+          const uVal = itemType === 'measurable' ? unitInp.value.trim() : '';
+          if (itemType === 'measurable' && tVal <= 0) {
+            err.textContent = 'اكتب رقم المستهدف اليومي للكمية أو الوقت.';
+            targetInp.focus();
+            return null;
+          }
           var daysArr = []; days.forEach(function (v) { daysArr.push(v); });
-          return { name: nm, days: daysArr.sort(), start: st.value, end: en.value, goal: gs.value || null, since: since.value || '' };
+          return { name: nm, days: daysArr.sort(), start: st.value, end: en.value, goal: gs.value || null, since: since.value || '', target: tVal, unit: uVal };
         };
         const foot = [
           h('button', {
@@ -3110,10 +3558,10 @@
           }, icon('trash', 16), 'حذف'));
         }
 
-        const nameBox = h('div', { style: 'margin:18px 0 20px' },
+        const nameBox = h('div', { style: 'margin:18px 0 16px' },
           field('الاسم', name, 'الاسم|اكتب اسم العادة أو المهمة. مثال: ورد القرآن أو صلاة الفجر في المسجد.')
         );
-        const daysBox = h('div', { style: 'margin:20px 0 20px' },
+        const daysBox = h('div', { style: 'margin:16px 0 20px' },
           field('الأيام', h('div', null, daySel, customWrap), 'الأيام|اختر من القائمة المنسدلة: كل يوم، أو أيام العمل، أو يوم محدد، أو أيام مخصصة.')
         );
         const quickBtn = isNew ? h('button', { type: 'button', class: 'btn', style: 'width:100%;margin-bottom:12px;background:var(--soft);color:var(--pine);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px', onclick: openQuickListsSheet }, '✨ أو اختر من قوائم إسلامية جاهزة (قرآن، صلاة، أذكار...)') : null;
@@ -3121,6 +3569,7 @@
         openSheet(isNew ? 'عنصر جديد' : 'تعديل العنصر', [
           quickBtn,
           nameBox,
+          typeSelector,
           daysBox,
           h('div', { class: 'two' }, field('من', st, 'وقت البداية|اكتب وقت البداية. سيب فاضي لو مش مربوط بساعة.'), field('إلى', en, 'وقت النهاية|اكتب وقت النهاية. اختياري.')),
           h('p', { class: 'hint' }, 'سيب الوقت فاضي لو العنصر مش مربوط بساعة معينة.'),
@@ -3266,7 +3715,13 @@
 
       /* ---------- الشاشات ---------- */
       function viewToday() {
-        const k = UI.date, items = itemsOn(k), done = items.filter(i => isDone(k, i.id)).length, isToday = k === todayKey();
+        const k = UI.date, items = itemsOn(k), isToday = k === todayKey();
+        let progSum = 0, fullDone = 0;
+        items.forEach(i => {
+          progSum += getItemProgress(k, i);
+          if (isItemDone(k, i)) fullDone++;
+        });
+        const done = fullDone;
         const p = h('div', { class: 'page' });
         const hijriToday = fmtHijri(k, true);
         p.append(h('div', { class: 'datenav' },
@@ -3293,22 +3748,58 @@
               h('button', { class: 'btn', onclick: openQuickListsSheet }, '📿 قوائم إسلامية جاهزة'))));
           return p;
         }
-        const seg = h('div', { class: 'seg', 'aria-hidden': 'true' }, items.map(i => h('i', { class: isDone(k, i.id) ? 'on' : '' })));
+        const seg = h('div', { class: 'seg', 'aria-hidden': 'true' }, items.map(i => {
+          const pr = getItemProgress(k, i);
+          const prPct = Math.round(pr * 100);
+          return h('i', {
+            class: pr >= 1 ? 'on' : '',
+            style: (pr > 0 && pr < 1) ? ('background:linear-gradient(to left, var(--pine) ' + prPct + '%, var(--soft) ' + prPct + '%)') : ''
+          });
+        }));
+        const heroDoneTxt = (progSum % 1 !== 0) ? num(progSum) : String(done);
         p.append(h('div', { class: 'hero' },
-          h('div', { class: 'hero-top' }, h('span', { class: 'hero-num' }, String(done)), h('span', { class: 'hero-of' }, 'من ' + items.length)),
+          h('div', { class: 'hero-top' }, h('span', { class: 'hero-num' }, heroDoneTxt), h('span', { class: 'hero-of' }, 'من ' + items.length)),
           items.length ? seg : null,
-          h('div', { class: 'hero-cap' }, !items.length ? 'مفيش عناصر في اليوم ده.' : done === items.length ? 'خلصت اليوم كله.' : 'باقي ' + (items.length - done) + ' عنصر.')));
+          h('div', { class: 'hero-cap' }, !items.length ? 'مفيش عناصر في اليوم ده.' : progSum >= items.length ? 'خلصت اليوم كله.' : 'باقي ما يعادل ' + num(Math.max(0, items.length - progSum)) + ' عنصر.')));
         p.append(h('div', { style: 'display:flex;justify-content:flex-end;padding:6px 4px 2px' },
           h('button', { class: 'link', style: 'font-size:.85rem;color:var(--pine);font-weight:700;display:flex;align-items:center;gap:4px', onclick: openQuickListsSheet }, '📿 قوائم إسلامية جاهزة')));
         const now = new Date(), nm = now.getHours() * 60 + now.getMinutes();
         const isNow = i => { if (!isToday || !i.start || !i.end) return false; const s = toMin(i.start), e = toMin(i.end); return s < e ? (nm >= s && nm < e) : (nm >= s || nm < e); };
         const row = i => {
-          const dn = isDone(k, i.id), g = i.goal && S.goals.find(x => x.id === i.goal), sk = streak(i);
+          const isMeas = i.target > 0;
+          const curVal = isMeas ? getItemVal(k, i.id) : (isDone(k, i.id) ? 1 : 0);
+          const dn = isMeas ? (curVal >= i.target) : (curVal > 0);
+          const isPart = isMeas && curVal > 0 && curVal < i.target;
+          const pct = isMeas ? Math.min(100, Math.round((curVal / i.target) * 100)) : (dn ? 100 : 0);
+          const g = i.goal && S.goals.find(x => x.id === i.goal), sk = streak(i);
           const handle = h('button', { class: 'drag-handle', 'aria-label': 'سحب لإعادة الترتيب', type: 'button' }, icon('grip', 18));
+
+          const chkClass = 'chk' + (dn ? ' on' : isPart ? ' part' : '');
+          const chkContent = dn ? icon('check', 24) : isPart ? h('span', null, pct + '%') : icon('check', 24);
+
+          const measBadge = isMeas ? h('button', {
+            type: 'button',
+            class: 'item-meas-badge' + (dn ? ' full' : isPart ? ' part' : ''),
+            onclick: (e) => {
+              e.stopPropagation();
+              openItemProgressSheet(k, i);
+            },
+            'aria-label': 'تعديل الإنجاز: ' + num(curVal) + ' من ' + num(i.target) + ' ' + (i.unit || '')
+          },
+            h('span', { class: 'meas-mini-bar', 'aria-hidden': 'true' }, h('i', { style: 'width:' + pct + '%' })),
+            h('span', null, num(curVal) + ' / ' + num(i.target) + ' ' + (i.unit || ''))
+          ) : null;
+
           const r = h('div', { class: 'item' + (dn ? ' done' : '') },
-            h('button', { class: 'chk' + (dn ? ' on' : ''), 'aria-pressed': String(dn), 'aria-label': (dn ? 'إلغاء التعليم: ' : 'تعليم: ') + i.name, onclick: () => { toggle(k, i.id); render(); } }, icon('check', 24)),
+            h('button', {
+              class: chkClass,
+              'aria-pressed': String(dn),
+              'aria-label': (dn ? 'إلغاء التعليم: ' : 'تعليم: ') + i.name,
+              onclick: () => { toggle(k, i.id); render(); }
+            }, chkContent),
             h('div', { class: 'item-body', role: 'button', tabindex: '0', onclick: () => itemEditor(i), onkeydown: e => { if (e.key === 'Enter') itemEditor(i); } },
               h('div', { class: 'item-name' }, i.name),
+              measBadge,
               h('div', { class: 'item-meta' },
                 isNow(i) ? h('span', { class: 'now' }, 'الآن') : null,
                 i.start ? tspan(i.start, i.end) : null,
@@ -3419,11 +3910,16 @@
           h('button', { class: 'icon-btn', 'aria-label': 'الأسبوع التالي', onclick: () => { UI.anchor = key(addDays(parse(days[0]), 7)); render(); } }, icon('chevL'))));
         const sched = S.items.filter(i => days.some(k => runsOn(i, k))).sort(cmpItems);
         let due = 0, did = 0;
-        sched.forEach(i => days.forEach(k => { if (runsOn(i, k) && k <= t) { due++; if (isDone(k, i.id)) did++; } }));
+        sched.forEach(i => days.forEach(k => {
+          if (runsOn(i, k) && k <= t) {
+            due++;
+            did += getItemProgress(k, i);
+          }
+        }));
         const pct = due ? Math.round(did / due * 100) : 0;
         p.append(h('div', { class: 'hero' },
           h('div', { class: 'hero-top' }, h('span', { class: 'hero-num' }, pct + '%'), h('span', { class: 'hero-of' }, 'التزام الأسبوع')),
-          h('div', { class: 'hero-cap' }, due ? ('علّمت ' + did + ' من ' + due + ' لحد النهارده.') : 'مفيش عناصر مجدولة في الأسبوع ده.')));
+          h('div', { class: 'hero-cap' }, due ? ('أنجزت ما يعادل ' + num(did) + ' من ' + due + ' لحد النهارده.') : 'مفيش عناصر مجدولة في الأسبوع ده.')));
         if (sched.length) {
           const g = h('div', { class: 'grid', style: 'margin-top:16px' });
           g.append(h('div'));
@@ -3432,8 +3928,39 @@
             g.append(h('div', { class: 'gname', title: i.name }, i.name));
             days.forEach(k => {
               if (!runsOn(i, k)) { g.append(h('span', { class: 'cell off', 'aria-hidden': 'true' }, '·')); return; }
-              const dn = isDone(k, i.id), fut = k > t;
-              const c = h('button', { class: 'cell' + (dn ? ' on' : (!fut && k < t ? ' miss' : '')), disabled: fut, 'aria-label': i.name + ' ' + fmtFull(k) + (dn ? ' تم' : ''), onclick: () => { toggle(k, i.id); render(); } }, dn ? icon('check', 14) : null);
+              const fut = k > t;
+              const isMeas = i.target > 0;
+              const v = isMeas ? getItemVal(k, i.id) : (isDone(k, i.id) ? 1 : 0);
+              const dn = isMeas ? (v >= i.target) : (v > 0);
+              const isPart = isMeas && v > 0 && v < i.target;
+
+              let cellContent = null;
+              let cellClass = 'cell';
+              if (dn) {
+                cellClass += ' on';
+                cellContent = icon('check', 14);
+              } else if (isPart) {
+                cellClass += ' part';
+                cellContent = num(v);
+              } else if (!fut && k < t) {
+                cellClass += ' miss';
+              }
+
+              const clickHandler = () => {
+                if (isMeas) {
+                  openItemProgressSheet(k, i);
+                } else {
+                  toggle(k, i.id);
+                  render();
+                }
+              };
+
+              const c = h('button', {
+                class: cellClass,
+                disabled: fut,
+                'aria-label': i.name + ' ' + fmtFull(k) + (dn ? ' تم' : isPart ? (' منجز ' + num(v)) : ''),
+                onclick: clickHandler
+              }, cellContent);
               g.append(c);
             });
           });
