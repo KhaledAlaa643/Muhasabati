@@ -2063,20 +2063,23 @@
       }
 
       function shareAppLink() {
-        const text = 'حمّل تطبيق محاسبتي لمتابعة العادات والأهداف اليومية والعبادات:\n' + APP_INFO.directApkUrl;
+        const title = 'تطبيق محاسبتي';
+        const text = 'حمّل تطبيق محاسبتي لمتابعة العادات والأهداف اليومية والعبادات:';
+        const url = APP_INFO.directApkUrl;
+        const fullMessage = text + '\n' + url;
         const cap = window.Capacitor, P = cap && cap.Plugins;
         if (cap && cap.isNativePlatform && cap.isNativePlatform() && P && P.Share) {
           P.Share.share({
-            title: 'تطبيق محاسبتي',
+            title: title,
             text: text,
-            url: APP_INFO.directApkUrl,
+            url: url,
             dialogTitle: 'مشاركة تطبيق محاسبتي'
-          }).catch(() => fallbackCopy(APP_INFO.directApkUrl));
+          }).catch(() => fallbackCopy(fullMessage));
         } else if (navigator.share) {
-          navigator.share({ title: 'تطبيق محاسبتي', text: text, url: APP_INFO.directApkUrl })
-            .catch(() => fallbackCopy(APP_INFO.directApkUrl));
+          navigator.share({ title: title, text: text, url: url })
+            .catch(() => fallbackCopy(fullMessage));
         } else {
-          fallbackCopy(APP_INFO.directApkUrl);
+          fallbackCopy(fullMessage);
         }
       }
 
