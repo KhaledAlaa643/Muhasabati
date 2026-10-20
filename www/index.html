@@ -2125,14 +2125,67 @@
       function normalize(d) {
         const s = Object.assign(blank(), d || {});
         s.settings = Object.assign({ weekStart: 6, timeMode: 'winter', hijriAdjust: 0 }, s.settings || {});
-        s.items = (s.items || []).map(i => Object.assign({ id: uid(), name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: null, since: '', target: 0, unit: '' }, i));
+        s.items = (s.items || []).map(i => {
+          const itm = Object.assign({ id: uid(), name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: null, since: '', until: '', target: 0, unit: '', lineageId: '', prevId: null }, i);
+          if (!itm.lineageId) itm.lineageId = itm.id;
+          return itm;
+        });
         s.goals = (s.goals || []).map(g => Object.assign({ id: uid(), name: '', unit: '', target: 0, start: todayKey(), deadline: '', weekly: 0, group: '', outcome: '', entries: [] }, g));
         s.log = s.log || {}; s.reviews = s.reviews || {};
         return s;
       }
 
       /* ---------- منطق ---------- */
-      const runsOn = (i, k) => i.days.includes(parse(k).getDay()) && (!i.since || i.since <= k);
+      const runsOn = (i, k) => i.days.includes(parse(k).getDay()) && (!i.since || i.since <= k) && (!i.until || i.until >= k);
+      const isItemPaused = (i, date) => {
+        const k = date || todayKey();
+        return !!(i && i.until && i.until < k);
+      };
+      const itemHasPastLogs = (id, beforeDate) => {
+        const bk = beforeDate || todayKey();
+        for (const k in S.log) {
+          if (k < bk && S.log[k] && S.log[k][id] != null) return true;
+        }
+        return false;
+      };
+      const itemTotalLogsCount = id => {
+        let count = 0;
+        for (const k in S.log) {
+          if (S.log[k] && S.log[k][id] != null) count++;
+        }
+        return count;
+      };
+      function pauseItem(id, fromDate) {
+        const it = S.items.find(i => i.id === id);
+        if (!it) return;
+        const baseDate = fromDate || todayKey();
+        it.until = key(addDays(parse(baseDate), -1));
+        save();
+        render();
+      }
+      function resumeItem(id, fromDate) {
+        const it = S.items.find(i => i.id === id);
+        if (!it) return;
+        const baseDate = fromDate || todayKey();
+        if (!it.until || diffDays(it.until, baseDate) <= 1) {
+          it.until = '';
+          save();
+          render();
+          return;
+        }
+        const rootLineage = it.lineageId || it.id;
+        it.lineageId = rootLineage;
+        const resumed = Object.assign({}, it, {
+          id: uid(),
+          lineageId: rootLineage,
+          prevId: it.id,
+          since: baseDate,
+          until: ''
+        });
+        S.items.push(resumed);
+        save();
+        render();
+      }
       function cmpItems(a, b) {
         const A = toMin(a.start), B = toMin(b.start);
         if (A === null && B === null) return S.items.indexOf(a) - S.items.indexOf(b);
@@ -2238,9 +2291,26 @@
       }
       function streak(i) {
         let n = 0, d = today(); const t = todayKey();
+        let curItem = i;
         for (let c = 0; c < 400; c++) {
-          const k = key(d); if (i.since && k < i.since) break;
-          if (i.days.includes(d.getDay())) { if (isDone(k, i.id)) n++; else if (k !== t) break; }
+          const k = key(d);
+          if (curItem.since && k < curItem.since) {
+            if (curItem.prevId) {
+              const prev = S.items.find(x => x.id === curItem.prevId);
+              if (prev) {
+                curItem = prev;
+              } else {
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+          if (curItem.until && k > curItem.until) { d = addDays(d, -1); continue; }
+          if (curItem.days.includes(d.getDay())) {
+            if (isDone(k, curItem.id)) n++;
+            else if (k !== t) break;
+          }
           d = addDays(d, -1);
         }
         return n;
@@ -2296,6 +2366,46 @@
         S.items = S.items.filter(i => i.id !== id);
       }
       function deleteGoal(id) { S.goals = S.goals.filter(g => g.id !== id); S.items.forEach(i => { if (i.goal === id) i.goal = null; }); }
+      function promptDeleteItem(it) {
+        if (!it) return;
+        const hasLogs = itemTotalLogsCount(it.id) > 0;
+        const body = [
+          h('div', { style: 'text-align:center;margin:8px 0 16px' },
+            h('div', { style: 'font-size:2.4rem;margin-bottom:8px' }, hasLogs ? '⏸️' : '🗑️'),
+            h('div', { style: 'font-weight:800;font-size:1.1rem;margin-bottom:6px' },
+              hasLogs ? 'هل تريد إيقاف المهمة أم حذفها نهائياً؟' : ('حذف مهمة "' + it.name + '"؟')
+            ),
+            h('p', { class: 'hint', style: 'line-height:1.6;font-size:.9rem' },
+              hasLogs
+                ? 'لديك إنجازات سابقة مسجلة لمهمة "' + it.name + '". نوصي بـ "الإيقاف المؤقت" حتى تحتفظ بكل سجلاتك وإحصائياتك السابقة دون أن تظهر المهمة في الأيام القادمة وتُحسب غياباً.'
+                : 'هل تريد حذف مهمة "' + it.name + '" نهائياً؟ يمكنك أيضاً إيقافها مؤقتاً للرجوع إليها في أي وقت دون فقدانها.'
+            )
+          )
+        ];
+        const foot = [
+          h('button', {
+            class: 'btn primary',
+            style: 'flex:1;display:flex;align-items:center;justify-content:center;gap:6px',
+            onclick: () => {
+              pauseItem(it.id);
+              closeSheet();
+              render();
+            }
+          }, '⏸️ إيقاف مؤقت (موصى به)'),
+          h('button', {
+            class: 'btn danger',
+            style: 'min-width:110px',
+            onclick: () => {
+              deleteItem(it.id);
+              save();
+              closeSheet();
+              render();
+            }
+          }, '🗑️ مسح نهائي'),
+          h('button', { class: 'btn', onclick: closeSheet }, 'إلغاء')
+        ];
+        openSheet('إيقاف أو حذف مهمة', body, foot);
+      }
 
 
 
@@ -2686,13 +2796,15 @@
 
         if (S.items.length) {
           body.append(h('div', { class: 'grp', style: 'margin-top:16px' }, '📋 المهام والعادات اليومية'));
-          S.items.forEach(it => {
+          const displayItems = S.items.filter(it => !S.items.some(other => other.prevId === it.id));
+          displayItems.forEach(it => {
             const iid = 'item:' + it.id;
             const chk = h('input', { type: 'checkbox', id: 'c_i_' + it.id, checked: selected.has(iid), style: 'width:18px;height:18px;accent-color:var(--pine)' });
             chk.onchange = () => { if (chk.checked) selected.add(iid); else selected.delete(iid); };
             const desc = it.target > 0 ? (' (' + num(it.target) + ' ' + (it.unit || '') + ')') : '';
+            const pausedTxt = isItemPaused(it) ? ' ⏸️ (موقوف)' : '';
             const lbl = h('label', { for: 'c_i_' + it.id, style: 'display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--line)' },
-              chk, h('span', { style: 'flex:1' }, it.name + desc)
+              chk, h('span', { style: 'flex:1' }, it.name + desc + pausedTxt)
             );
             body.append(lbl);
           });
@@ -3288,9 +3400,11 @@
             const iStats = {};
             days.forEach(k => {
               itemsOn(k).forEach(i => {
-                if (!iStats[i.id]) iStats[i.id] = { name: i.name, done: 0, due: 0 };
-                iStats[i.id].due++;
-                iStats[i.id].done += getItemProgress(k, i);
+                const lid = i.lineageId || i.id;
+                if (!iStats[lid]) iStats[lid] = { name: i.name, done: 0, due: 0 };
+                iStats[lid].name = i.name;
+                iStats[lid].due++;
+                iStats[lid].done += getItemProgress(k, i);
               });
             });
             const sorted = Object.keys(iStats).map(k => iStats[k]).filter(x => x.due >= 3).sort((a, b) => (b.done / b.due) - (a.done / a.due)).slice(0, 5);
@@ -3373,9 +3487,83 @@
         return p;
       }
 
+      function applyItemChangeFromToday(it, v) {
+        const tk = todayKey();
+        const yk = key(addDays(today(), -1));
+        const rootLineage = it.lineageId || it.id;
+        it.lineageId = rootLineage;
+
+        // 1. Freeze old item at yesterday
+        it.until = yk;
+
+        // 2. Create evolved item starting today
+        const newItem = Object.assign({}, it, v, {
+          id: uid(),
+          lineageId: rootLineage,
+          prevId: it.id,
+          since: tk,
+          until: v.until || ''
+        });
+
+        // 3. Migrate any logs from today or future to newItem
+        for (const k in S.log) {
+          if (k >= tk && S.log[k] && S.log[k][it.id] != null) {
+            S.log[k][newItem.id] = S.log[k][it.id];
+            delete S.log[k][it.id];
+          }
+        }
+
+        S.items.push(newItem);
+        save();
+        closeSheet();
+        render();
+      }
+
+      function promptSaveScope(it, v) {
+        const targetChanged = it.target !== v.target || it.unit !== v.unit;
+        const oldTargetDesc = it.target > 0 ? (num(it.target) + ' ' + (it.unit || '')) : 'مهمة عادية (صح / خطأ)';
+        const newTargetDesc = v.target > 0 ? (num(v.target) + ' ' + (v.unit || '')) : 'مهمة عادية (صح / خطأ)';
+
+        const body = [
+          h('div', { style: 'text-align:center;margin:8px 0 16px' },
+            h('div', { style: 'font-size:2.2rem;margin-bottom:6px' }, '⚖️'),
+            h('div', { style: 'font-weight:800;font-size:1.05rem;margin-bottom:4px' }, 'تطبيق تعديل ورد "' + it.name + '"'),
+            targetChanged ? h('div', { style: 'background:var(--soft);border-radius:10px;padding:8px 12px;margin:10px 0;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:10px' },
+              h('span', { style: 'color:var(--ink2)' }, oldTargetDesc),
+              h('span', { style: 'font-weight:800' }, '⬅️'),
+              h('span', { style: 'color:var(--pine);font-weight:800' }, newTargetDesc)
+            ) : null,
+            h('p', { class: 'hint', style: 'line-height:1.6;font-size:.88rem;margin-top:10px' },
+              'لديك إنجازات سابقة مسجلة لهذا الورد في الأيام الماضية. كيف تحب تطبيق التعديل الجديد؟')
+          )
+        ];
+
+        const foot = [
+          h('button', {
+            class: 'btn primary',
+            style: 'flex:1;display:flex;align-items:center;justify-content:center;gap:6px',
+            onclick: () => {
+              applyItemChangeFromToday(it, v);
+            }
+          }, '✨ تطبيق بدءاً من اليوم (موصى به)'),
+          h('button', {
+            class: 'btn',
+            onclick: () => {
+              Object.assign(it, v);
+              save();
+              closeSheet();
+              render();
+            }
+          }, '🔄 تطبيق على كل الأيام (بأثر رجعي)'),
+          h('button', { class: 'btn', onclick: closeSheet }, 'إلغاء')
+        ];
+
+        openSheet('تحديد نطاق التعديل', body, foot);
+      }
+
       function itemEditor(it) {
         const isNew = !it;
-        const d = Object.assign({ name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: '', since: UI.tab === 'today' ? UI.date : todayKey(), target: 0, unit: '' }, it || {});
+        const d = Object.assign({ name: '', days: [0, 1, 2, 3, 4, 5, 6], start: '', end: '', goal: '', since: UI.tab === 'today' ? UI.date : todayKey(), until: '', target: 0, unit: '' }, it || {});
         const days = new Set(d.days);
         const name = h('input', { class: 'in', type: 'text', placeholder: 'مثال: ورد القرآن', value: d.name });
 
@@ -3522,6 +3710,50 @@
         since.addEventListener('input', updateSinceHijri);
         since.addEventListener('change', updateSinceHijri);
         updateSinceHijri();
+
+        const until = h('input', { class: 'in', type: 'date', value: d.until || '' });
+        const untilHijri = h('div', { class: 'hint', style: 'margin-top:4px;font-size:.78rem;color:var(--pine);font-weight:600' });
+        const updateUntilHijri = () => { untilHijri.textContent = until.value ? ('الموافق هجرياً: ' + fmtHijri(until.value, true)) : ''; };
+        until.addEventListener('input', updateUntilHijri);
+        until.addEventListener('change', updateUntilHijri);
+        updateUntilHijri();
+
+        const isPaused = !isNew && isItemPaused(it);
+        const pauseBanner = isPaused ? h('div', {
+          style: 'background:rgba(201,127,18,0.12);border:1px solid var(--saffron);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px'
+        },
+          h('div', null,
+            h('div', { style: 'font-weight:800;color:var(--saffron);font-size:.92rem' }, '⏸️ هذا الورد موقوف مؤقتاً'),
+            h('div', { style: 'font-size:.8rem;color:var(--ink2);margin-top:2px' }, it.until ? ('ينتهي في: ' + fmtDateWithHijri(it.until)) : '')
+          ),
+          h('button', {
+            type: 'button',
+            class: 'btn small primary',
+            style: 'font-size:.82rem;padding:4px 10px;white-space:nowrap',
+            onclick: () => {
+              resumeItem(it.id);
+              closeSheet();
+              render();
+            }
+          }, '▶️ استئناف اليوم')
+        ) : null;
+
+        const quickPauseCard = (!isNew && !isPaused) ? h('div', {
+          style: 'margin-top:14px;padding:10px 12px;background:var(--soft);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px'
+        },
+          h('div', { style: 'font-size:.82rem;color:var(--ink2)' }, 'مسافر أو مشغول لفترة؟ تقدر توقف الورد مؤقتاً بدون ما يظهر كغياب.'),
+          h('button', {
+            type: 'button',
+            class: 'btn small',
+            style: 'white-space:nowrap;font-size:.82rem;font-weight:700',
+            onclick: () => {
+              pauseItem(it.id);
+              closeSheet();
+              render();
+            }
+          }, '⏸️ إيقاف مؤقت من اليوم')
+        ) : null;
+
         const err = h('div', { class: 'err', role: 'alert' });
         const doSave = () => {
           const nm = name.value.trim();
@@ -3536,26 +3768,38 @@
             return null;
           }
           var daysArr = []; days.forEach(function (v) { daysArr.push(v); });
-          return { name: nm, days: daysArr.sort(), start: st.value, end: en.value, goal: gs.value || null, since: since.value || '', target: tVal, unit: uVal };
+          return { name: nm, days: daysArr.sort(), start: st.value, end: en.value, goal: gs.value || null, since: since.value || '', until: until.value || '', target: tVal, unit: uVal };
         };
         const foot = [
           h('button', {
             class: 'btn primary', onclick: () => {
               const v = doSave(); if (!v) return;
-              if (isNew) S.items.push(Object.assign({ id: uid() }, v)); else Object.assign(it, v);
-              save(); closeSheet(); render();
+              if (isNew) {
+                const newId = uid();
+                S.items.push(Object.assign({ id: newId, lineageId: newId, prevId: null }, v));
+                save(); closeSheet(); render();
+                return;
+              }
+              const hasPast = itemHasPastLogs(it.id) || (it.since && it.since < todayKey());
+              const targetChanged = it.target !== v.target || it.unit !== v.unit;
+              const daysChanged = it.days.length !== v.days.length || it.days.some((d, idx) => d !== v.days[idx]);
+              const hasConfigChanges = targetChanged || daysChanged || it.name !== v.name;
+              if (hasPast && hasConfigChanges) {
+                promptSaveScope(it, v);
+              } else {
+                Object.assign(it, v);
+                save(); closeSheet(); render();
+              }
             }
           }, 'حفظ')
         ];
         if (!isNew) {
-          foot.push(h('button', { class: 'btn', onclick: () => { const v = doSave(); if (!v) return; S.items.push(Object.assign({ id: uid() }, v)); save(); closeSheet(); render(); } }, 'نسخ'));
+          foot.push(h('button', { class: 'btn', onclick: () => { const v = doSave(); if (!v) return; const newId = uid(); S.items.push(Object.assign({ id: newId, lineageId: newId, prevId: null }, v)); save(); closeSheet(); render(); } }, 'نسخ'));
           foot.push(h('button', {
             class: 'btn danger', style: 'display:inline-flex;align-items:center;gap:6px', onclick: () => {
-              if (confirm('هل أنت متأكد من حذف هذه المهمة نهائياً؟')) {
-                deleteItem(it.id); save(); closeSheet(); render();
-              }
+              promptDeleteItem(it);
             }
-          }, icon('trash', 16), 'حذف'));
+          }, icon('trash', 16), 'حذف أو إيقاف'));
         }
 
         const nameBox = h('div', { style: 'margin:18px 0 16px' },
@@ -3567,6 +3811,7 @@
         const quickBtn = isNew ? h('button', { type: 'button', class: 'btn', style: 'width:100%;margin-bottom:12px;background:var(--soft);color:var(--pine);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px', onclick: openQuickListsSheet }, '✨ أو اختر من قوائم إسلامية جاهزة (قرآن، صلاة، أذكار...)') : null;
 
         openSheet(isNew ? 'عنصر جديد' : 'تعديل العنصر', [
+          pauseBanner,
           quickBtn,
           nameBox,
           typeSelector,
@@ -3575,6 +3820,8 @@
           h('p', { class: 'hint' }, 'سيب الوقت فاضي لو العنصر مش مربوط بساعة معينة.'),
           field('يزوّد هدف لما تعلّم عليه', gs, 'ربط بهدف|لو العنصر ده جزء من هدف أكبر اربطه بالهدف وهيتحسب تلقائياً.'),
           field('يبدأ من تاريخ', h('div', null, since, sinceHijri), 'تاريخ البداية|مفيدة لو حابب تبدأ العنصر من تاريخ مستقبلي.'),
+          field('ينتهي في تاريخ (اختياري)', h('div', null, until, untilHijri), 'تاريخ الانتهاء|لو حددت تاريخ انتهاء، الورد مش هيظهر في الأيام اللي بعده ومش هيتحسب غياب.'),
+          quickPauseCard,
           err
         ].filter(Boolean), foot);
       }
@@ -3806,11 +4053,9 @@
                 g ? h('span', { class: 'tag' }, g.name) : null,
                 sk >= 2 ? h('span', null, sk + ' أيام متتالية') : null)),
             h('button', {
-              class: 'icon-btn item-del', 'aria-label': 'حذف المهمة', onclick: (e) => {
+              class: 'icon-btn item-del', 'aria-label': 'حذف أو إيقاف المهمة', onclick: (e) => {
                 e.stopPropagation();
-                if (confirm('هل تريد حذف مهمة "' + i.name + '"؟')) {
-                  deleteItem(i.id); save(); render();
-                }
+                promptDeleteItem(i);
               }
             }, icon('trash', 18)),
             handle);
@@ -3820,6 +4065,17 @@
         const free = items.filter(i => !i.start), timed = items.filter(i => i.start);
         if (free.length) { p.append(h('div', { class: 'grp' }, 'طول اليوم'), h('div', null, free.map(row))); }
         if (timed.length) { p.append(h('div', { class: 'grp' }, 'بالساعة'), h('div', null, timed.map(row))); }
+        const pausedCount = S.items.filter(it => isItemPaused(it) && !S.items.some(other => other.prevId === it.id)).length;
+        if (pausedCount > 0) {
+          p.append(h('div', { style: 'text-align:center;margin:16px 0 8px' },
+            h('button', {
+              type: 'button',
+              class: 'link',
+              style: 'font-size:.84rem;color:var(--ink2);display:inline-flex;align-items:center;gap:6px',
+              onclick: () => { UI.tab = 'more'; render(); }
+            }, '⏸️ لديك ' + pausedCount + (pausedCount === 1 ? ' ورد موقوف مؤقتاً' : ' أوراد موقوفة مؤقتاً') + ' (عرض في الإعدادات)')
+          ));
+        }
         p.append(h('div', { class: 'task-bottom-spacer', style: 'height:80px;clear:both', 'aria-hidden': 'true' }));
         return p;
       }
@@ -3924,10 +4180,20 @@
           const g = h('div', { class: 'grid', style: 'margin-top:16px' });
           g.append(h('div'));
           days.forEach(k => { const dd = parse(k); g.append(h('div', { class: 'gh' + (k === t ? ' today' : '') }, INIT[dd.getDay()], h('b', null, String(dd.getDate())))); });
+          
+          const lineageMap = new Map();
           sched.forEach(i => {
-            g.append(h('div', { class: 'gname', title: i.name }, i.name));
+            const lid = i.lineageId || i.id;
+            if (!lineageMap.has(lid)) lineageMap.set(lid, []);
+            lineageMap.get(lid).push(i);
+          });
+
+          lineageMap.forEach(groupItems => {
+            const latest = groupItems[groupItems.length - 1];
+            g.append(h('div', { class: 'gname', title: latest.name }, latest.name));
             days.forEach(k => {
-              if (!runsOn(i, k)) { g.append(h('span', { class: 'cell off', 'aria-hidden': 'true' }, '·')); return; }
+              const i = groupItems.find(x => runsOn(x, k));
+              if (!i) { g.append(h('span', { class: 'cell off', 'aria-hidden': 'true' }, '·')); return; }
               const fut = k > t;
               const isMeas = i.target > 0;
               const v = isMeas ? getItemVal(k, i.id) : (isDone(k, i.id) ? 1 : 0);
@@ -4156,7 +4422,62 @@
           )
         );
 
+        /* --- الأوراد الموقوفة مؤقتاً --- */
+        const pausedItems = S.items.filter(it => isItemPaused(it) && !S.items.some(other => other.prevId === it.id));
+        const pausedCard = h('div', { class: 'card' });
+        if (!pausedItems.length) {
+          pausedCard.append(
+            h('p', { class: 'hint', style: 'margin:0;line-height:1.6' },
+              'لا توجد أوراد موقوفة حالياً. عندما تقوم بإيقاف أي ورد مؤقتاً (بسبب سفر أو انشغال أو تعديل نظام حياتك)، ستجده هنا مع إمكانية استئنافه في أي وقت بضغطة زر واحدة دون فقدان أي إحصائيات سابقة.')
+          );
+        } else {
+          pausedCard.append(
+            h('p', { class: 'hint', style: 'margin:0 0 12px;line-height:1.6' },
+              'الأوراد التالية موقوفة مؤقتاً ولا تظهر في جدولك اليومي أو الأسبوعي ولا تُحسب كغياب. يمكنك استئناف أي منها ليعود إلى جدولك اليوم فوراً:')
+          );
+          pausedItems.forEach((it, idx) => {
+            const targetDesc = it.target > 0 ? (' (' + num(it.target) + ' ' + (it.unit || '') + ')') : '';
+            const row = h('div', {
+              style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:' + (idx ? '12px 0 0' : '4px 0 0') + ';' + (idx ? 'border-top:1px solid var(--line);margin-top:12px' : '')
+            },
+              h('div', { style: 'flex:1;min-width:0' },
+                h('div', { style: 'font-weight:800;font-size:.95rem' }, it.name + targetDesc),
+                h('div', { style: 'font-size:.8rem;color:var(--ink2);margin-top:2px' },
+                  it.until ? ('موقوف منذ: ' + fmtDateWithHijri(it.until)) : 'موقوف مؤقتاً'
+                )
+              ),
+              h('div', { style: 'display:flex;gap:6px;flex-shrink:0' },
+                h('button', {
+                  type: 'button',
+                  class: 'btn small primary',
+                  style: 'padding:5px 12px;font-size:.82rem',
+                  onclick: () => {
+                    resumeItem(it.id);
+                    render();
+                  }
+                }, '▶️ استئناف'),
+                h('button', {
+                  type: 'button',
+                  class: 'btn small',
+                  style: 'padding:5px 10px;font-size:.82rem',
+                  onclick: () => itemEditor(it)
+                }, '✏️ تعديل'),
+                h('button', {
+                  type: 'button',
+                  class: 'btn small danger',
+                  style: 'padding:5px 8px;font-size:.82rem',
+                  'aria-label': 'حذف',
+                  onclick: () => promptDeleteItem(it)
+                }, icon('trash', 14))
+              )
+            );
+            pausedCard.append(row);
+          });
+        }
+
         p.append(
+          h('div', { class: 'sec' }, 'الأوراد والمهام الموقوفة مؤقتاً (' + pausedItems.length + ')'),
+          pausedCard,
           h('div', { class: 'sec' }, 'تحديثات التطبيق'),
           updateCard,
           h('div', { class: 'sec' }, 'التقويم الهجري'),
