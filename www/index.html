@@ -3490,6 +3490,16 @@
       function applyItemChangeFromToday(it, v) {
         const tk = todayKey();
         const yk = key(addDays(today(), -1));
+
+        // If the task was just created today or in the future, it has no past before today
+        if (it.since && it.since >= tk) {
+          Object.assign(it, v);
+          save();
+          closeSheet();
+          render();
+          return;
+        }
+
         const rootLineage = it.lineageId || it.id;
         it.lineageId = rootLineage;
 
@@ -3534,7 +3544,7 @@
               h('span', { style: 'color:var(--pine);font-weight:800' }, newTargetDesc)
             ) : null,
             h('p', { class: 'hint', style: 'line-height:1.6;font-size:.88rem;margin-top:10px' },
-              'لديك إنجازات سابقة مسجلة لهذا الورد في الأيام الماضية. كيف تحب تطبيق التعديل الجديد؟')
+              'كيف تحب تطبيق هذا التعديل الجديد؟ يمكنك تطبيقه بدءاً من اليوم للحفاظ على كل سجلات وإحصائيات الأيام السابقة دون المساس بها:')
           )
         ];
 
@@ -3555,7 +3565,7 @@
               render();
             }
           }, '🔄 تطبيق على كل الأيام (بأثر رجعي)'),
-          h('button', { class: 'btn', onclick: closeSheet }, 'إلغاء')
+          h('button', { class: 'btn', onclick: () => { closeSheet(); itemEditor(it); } }, 'رجوع')
         ];
 
         openSheet('تحديد نطاق التعديل', body, foot);
@@ -3780,11 +3790,12 @@
                 save(); closeSheet(); render();
                 return;
               }
-              const hasPast = itemHasPastLogs(it.id) || (it.since && it.since < todayKey());
               const targetChanged = it.target !== v.target || it.unit !== v.unit;
-              const daysChanged = it.days.length !== v.days.length || it.days.some((d, idx) => d !== v.days[idx]);
-              const hasConfigChanges = targetChanged || daysChanged || it.name !== v.name;
-              if (hasPast && hasConfigChanges) {
+              const daysChanged = !it.days || it.days.length !== v.days.length || it.days.some((d, idx) => d !== v.days[idx]);
+              const timesChanged = (it.start || '') !== (v.start || '') || (it.end || '') !== (v.end || '');
+              const nameChanged = (it.name || '').trim() !== (v.name || '').trim();
+              const hasConfigChanges = targetChanged || daysChanged || timesChanged || nameChanged;
+              if (hasConfigChanges) {
                 promptSaveScope(it, v);
               } else {
                 Object.assign(it, v);
