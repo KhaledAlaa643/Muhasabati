@@ -1159,6 +1159,172 @@
       align-items: center
     }
 
+    /* --- goal completed celebration --- */
+    .goal-done-card {
+      position: relative;
+      overflow: hidden;
+      border-color: var(--ok) !important;
+    }
+
+    .goal-done-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(44,138,108,.08) 0%, rgba(44,138,108,.02) 50%, rgba(201,127,18,.06) 100%);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    .goal-done-card > * {
+      position: relative;
+      z-index: 1
+    }
+
+    .goal-done-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(44,138,108,.12), rgba(201,127,18,.1));
+      border-radius: 12px;
+      margin-bottom: 12px
+    }
+
+    .goal-done-trophy {
+      font-size: 1.8rem;
+      line-height: 1;
+      animation: trophyPulse 2s ease-in-out infinite
+    }
+
+    @keyframes trophyPulse {
+      0%, 100% { transform: scale(1) rotate(0deg) }
+      25% { transform: scale(1.1) rotate(-5deg) }
+      50% { transform: scale(1) rotate(0deg) }
+      75% { transform: scale(1.1) rotate(5deg) }
+    }
+
+    .goal-done-text {
+      flex: 1
+    }
+
+    .goal-done-title {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--ok)
+    }
+
+    .goal-done-sub {
+      font-size: .82rem;
+      color: var(--ink2);
+      margin-top: 1px
+    }
+
+    .goal-bar-done > i {
+      background: var(--ok) !important
+    }
+
+    .repeat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(201,127,18,.12);
+      color: var(--saffron);
+      border: 1px solid rgba(201,127,18,.3)
+    }
+
+    .cycle-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(44,138,108,.1);
+      color: var(--ok);
+      border: 1px solid rgba(44,138,108,.25)
+    }
+
+    .goal-renew-btn {
+      min-height: 40px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--ok), var(--pine));
+      color: #fff;
+      font-weight: 800;
+      font-size: .92rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 3px 12px rgba(44,138,108,.25)
+    }
+
+    .goal-renew-btn:active {
+      transform: scale(.97);
+      box-shadow: 0 1px 6px rgba(44,138,108,.2)
+    }
+
+    /* --- collapsible goal groups --- */
+    .goal-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none
+    }
+
+    .goal-group-header .chevron {
+      transition: transform .2s ease;
+      color: var(--ink2)
+    }
+
+    .goal-group-header.collapsed .chevron {
+      transform: rotate(-90deg)
+    }
+
+    .goal-group-body {
+      overflow: hidden;
+      transition: max-height .25s ease
+    }
+
+    .goal-group-body.collapsed {
+      max-height: 0 !important;
+      overflow: hidden
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .goal-done-card::before {
+        background: linear-gradient(135deg, rgba(92,191,164,.06) 0%, rgba(92,191,164,.02) 50%, rgba(232,176,78,.04) 100%)
+      }
+      .goal-done-banner {
+        background: linear-gradient(135deg, rgba(92,191,164,.1), rgba(232,176,78,.08))
+      }
+      .goal-done-title {
+        color: var(--ok)
+      }
+      .repeat-badge {
+        background: rgba(232,176,78,.1);
+        color: var(--saffron);
+        border-color: rgba(232,176,78,.25)
+      }
+      .cycle-badge {
+        background: rgba(92,191,164,.1);
+        color: var(--ok);
+        border-color: rgba(92,191,164,.2)
+      }
+      .goal-renew-btn {
+        box-shadow: 0 3px 12px rgba(0,0,0,.3)
+      }
+    }
+
     .step {
       width: 44px;
       height: 44px;
@@ -2133,7 +2299,7 @@
           if (!itm.lineageId) itm.lineageId = itm.id;
           return itm;
         });
-        s.goals = (s.goals || []).map(g => Object.assign({ id: uid(), name: '', unit: '', target: 0, start: todayKey(), deadline: '', weekly: 0, group: '', outcome: '', entries: [] }, g));
+        s.goals = (s.goals || []).map(g => Object.assign({ id: uid(), name: '', unit: '', target: 0, start: todayKey(), deadline: '', weekly: 0, group: '', outcome: '', entries: [], repeatType: 'none', repeatInterval: 1, cycle: 1, cycleOffset: 0, completedCycles: [] }, g));
         s.log = s.log || {}; s.reviews = s.reviews || {};
         return s;
       }
@@ -2318,13 +2484,11 @@
         }
         return n;
       }
-      function goalCount(g, from, to) {
+      function linkedGoalCount(g) {
         let n = 0;
-        g.entries.forEach(function (e) { if ((!from || e.d >= from) && (!to || e.d <= to)) n += e.n; });
         const linkedItems = S.items.filter(i => i.goal === g.id);
         if (linkedItems.length) {
           for (const k in S.log) {
-            if ((from && k < from) || (to && k > to)) continue;
             linkedItems.forEach(i => {
               if (S.log[k] && S.log[k][i.id] != null) {
                 const v = Number(S.log[k][i.id]);
@@ -2333,6 +2497,30 @@
                 }
               }
             });
+          }
+        }
+        return n;
+      }
+      function goalCount(g, from, to) {
+        let n = 0;
+        g.entries.forEach(function (e) { if ((!from || e.d >= from) && (!to || e.d <= to)) n += e.n; });
+        const linkedItems = S.items.filter(i => i.goal === g.id);
+        if (linkedItems.length) {
+          if (from || to) {
+            for (const k in S.log) {
+              if ((from && k < from) || (to && k > to)) continue;
+              linkedItems.forEach(i => {
+                if (S.log[k] && S.log[k][i.id] != null) {
+                  const v = Number(S.log[k][i.id]);
+                  if (!isNaN(v) && v > 0) {
+                    n += (i.target > 0 ? v : 1);
+                  }
+                }
+              });
+            }
+          } else {
+            const linkedTotal = linkedGoalCount(g);
+            n += Math.max(0, linkedTotal - (g.cycleOffset || 0));
           }
         }
         return Math.round(n * 100) / 100;
@@ -3715,7 +3903,10 @@
         };
 
         const st = h('input', { class: 'in', type: 'time', value: d.start }), en = h('input', { class: 'in', type: 'time', value: d.end });
-        const gs = h('select', { class: 'in' }, h('option', { value: '' }, 'لا شيء'), S.goals.map(g => h('option', { value: g.id }, g.name)));
+        const gs = h('select', { class: 'in' }, h('option', { value: '' }, 'لا شيء'), S.goals.map(g => {
+          const prefix = (g.repeatType && g.repeatType !== 'none') ? '🔄 ' : '🎯 ';
+          return h('option', { value: g.id }, prefix + g.name + (g.unit ? ' (' + g.unit + ')' : ''));
+        }));
         gs.value = d.goal || '';
         const since = h('input', { class: 'in', type: 'date', value: d.since || todayKey() });
         const sinceHijri = h('div', { class: 'hint', style: 'margin-top:4px;font-size:.78rem;color:var(--pine);font-weight:600' });
@@ -3842,11 +4033,11 @@
 
       function goalEditor(g) {
         const isNew = !g;
-        const d = Object.assign({ name: '', unit: '', target: '', start: todayKey(), deadline: '', weekly: '', group: '', outcome: '' }, g || {});
+        const d = Object.assign({ name: '', unit: '', target: '', start: todayKey(), deadline: '', weekly: '', group: '', outcome: '', repeatType: 'none', repeatInterval: 1 }, g || {});
         const cur = g ? goalCount(g) : 0;
-        const name = h('input', { class: 'in', type: 'text', placeholder: 'مثال: دروس الأكاديمية', value: d.name });
-        const unit = h('input', { class: 'in', type: 'text', placeholder: 'مثال: درس', value: d.unit });
-        const target = h('input', { class: 'in', type: 'number', inputmode: 'decimal', min: '0', placeholder: 'مثال: 16', value: d.target || '' });
+        const name = h('input', { class: 'in', type: 'text', placeholder: 'مثال: دروس الأكاديمية أو ختم القرآن', value: d.name });
+        const unit = h('input', { class: 'in', type: 'text', placeholder: 'مثال: صفحة، درس، ساعة', value: d.unit });
+        const target = h('input', { class: 'in', type: 'number', inputmode: 'decimal', min: '0', placeholder: 'مثال: 604 أو 16', value: d.target || '' });
         const current = h('input', { class: 'in', type: 'number', inputmode: 'decimal', value: String(cur) });
         const start = h('input', { class: 'in', type: 'date', value: d.start || todayKey() });
         const startHijri = h('div', { class: 'hint', style: 'margin-top:4px;font-size:.78rem;color:var(--pine);font-weight:600' });
@@ -3860,17 +4051,120 @@
         dl.addEventListener('input', updateDlHijri);
         dl.addEventListener('change', updateDlHijri);
         updateDlHijri();
+
+        // Repeat configuration
+        let curRepeatType = d.repeatType || 'none';
+        let curRepeatInterval = d.repeatInterval || 1;
+
+        const repeatSelect = h('select', { class: 'in' },
+          h('option', { value: 'none' }, 'هدف لمرة واحدة (بدون تكرار)'),
+          h('option', { value: 'weeks:1' }, '🔄 يتكرر كل أسبوع'),
+          h('option', { value: 'weeks:2' }, '🔄 يتكرر كل أسبوعين (نصف شهري)'),
+          h('option', { value: 'weeks:3' }, '🔄 يتكرر كل 3 أسابيع'),
+          h('option', { value: 'weeks:4' }, '🔄 يتكرر كل 4 أسابيع'),
+          h('option', { value: 'months:1' }, '🔄 يتكرر كل شهر (كختم القرآن شهرياً)'),
+          h('option', { value: 'months:2' }, '🔄 يتكرر كل شهرين'),
+          h('option', { value: 'months:3' }, '🔄 يتكرر كل 3 أشهر (ربع سنوي)'),
+          h('option', { value: 'custom' }, '⚙️ تكرار مخصص...')
+        );
+
+        if (curRepeatType === 'none') {
+          repeatSelect.value = 'none';
+        } else {
+          const standardKey = curRepeatType + ':' + curRepeatInterval;
+          if (['weeks:1', 'weeks:2', 'weeks:3', 'weeks:4', 'months:1', 'months:2', 'months:3'].includes(standardKey)) {
+            repeatSelect.value = standardKey;
+          } else {
+            repeatSelect.value = 'custom';
+          }
+        }
+
+        const customInterval = h('input', { class: 'in', type: 'number', min: '1', style: 'flex:1', value: String(curRepeatInterval || 1) });
+        const customUnit = h('select', { class: 'in', style: 'flex:1' },
+          h('option', { value: 'weeks' }, 'أسابيع'),
+          h('option', { value: 'months' }, 'أشهر')
+        );
+        customUnit.value = curRepeatType === 'months' ? 'months' : 'weeks';
+
+        const customBox = h('div', {
+          style: 'display:' + (repeatSelect.value === 'custom' ? 'flex' : 'none') + ';gap:8px;margin-top:8px;align-items:center'
+        },
+          h('span', { style: 'font-size:.84rem;color:var(--ink2)' }, 'كل:'),
+          customInterval,
+          customUnit
+        );
+
+        const repeatHint = h('div', { class: 'hint', style: 'margin-top:6px;font-size:.8rem;line-height:1.5' });
+
+        function updateRepeatState(userTriggered) {
+          const val = repeatSelect.value;
+          if (val === 'none') {
+            curRepeatType = 'none';
+            curRepeatInterval = 1;
+            customBox.style.display = 'none';
+            repeatHint.innerHTML = '';
+          } else if (val === 'custom') {
+            curRepeatType = customUnit.value;
+            curRepeatInterval = Math.max(1, parseInt(customInterval.value, 10) || 1);
+            customBox.style.display = 'flex';
+            repeatHint.innerHTML = '✨ <b>هدف دوري متكرر:</b> عند الوصول للمستهدف سيظهر زر احتفالي لبدء دورة جديدة فوراً مع حفظ الدورات السابقة في السجل.';
+          } else {
+            const parts = val.split(':');
+            curRepeatType = parts[0];
+            curRepeatInterval = parseInt(parts[1], 10);
+            customBox.style.display = 'none';
+            repeatHint.innerHTML = '✨ <b>هدف دوري متكرر:</b> عند الوصول للمستهدف سيظهر زر احتفالي لبدء دورة جديدة فوراً مع حفظ الدورات السابقة في السجل.';
+          }
+
+          if (userTriggered && curRepeatType !== 'none') {
+            const base = parse(start.value || todayKey());
+            if (curRepeatType === 'weeks') {
+              dl.value = key(addDays(base, curRepeatInterval * 7));
+            } else if (curRepeatType === 'months') {
+              const nd = new Date(base.getFullYear(), base.getMonth() + curRepeatInterval, base.getDate());
+              dl.value = key(nd);
+            }
+            updateDlHijri();
+          }
+        }
+
+        repeatSelect.addEventListener('change', () => updateRepeatState(true));
+        customInterval.addEventListener('input', () => updateRepeatState(false));
+        customUnit.addEventListener('change', () => updateRepeatState(false));
+        updateRepeatState(false);
+
         const weekly = h('input', { class: 'in', type: 'number', inputmode: 'decimal', min: '0', placeholder: 'مثال: 10', value: d.weekly || '' });
-        const group = h('input', { class: 'in', type: 'text', placeholder: 'مثال: المرحلة الأولى', value: d.group || '' });
+        const group = h('input', { class: 'in', type: 'text', placeholder: 'مثال: المرحلة الأولى، عبادات...', value: d.group || '' });
         const out = h('textarea', { class: 'in', rows: '2', placeholder: 'إيه اللي هيبقى في إيدك لما تخلص؟' }); out.value = d.outcome || '';
         const err = h('div', { class: 'err', role: 'alert' });
         const foot = [h('button', {
           class: 'btn primary', onclick: () => {
             const nm = name.value.trim(); if (!nm) { err.textContent = 'اكتب اسم الهدف.'; name.focus(); return; }
-            const v = { name: nm, unit: unit.value.trim(), target: Number(target.value) || 0, start: start.value || todayKey(), deadline: dl.value || '', weekly: Number(weekly.value) || 0, group: group.value.trim(), outcome: out.value.trim() };
+            const v = {
+              name: nm,
+              unit: unit.value.trim(),
+              target: Number(target.value) || 0,
+              start: start.value || todayKey(),
+              deadline: dl.value || '',
+              weekly: Number(weekly.value) || 0,
+              group: group.value.trim(),
+              outcome: out.value.trim(),
+              repeatType: curRepeatType,
+              repeatInterval: curRepeatInterval
+            };
             const want = Number(current.value) || 0;
-            if (isNew) { const ng = Object.assign({ id: uid(), entries: [] }, v); if (want) ng.entries.push({ d: todayKey(), n: want }); S.goals.push(ng); }
-            else { Object.assign(g, v); const delta = want - goalCount(g); if (delta) g.entries.push({ d: todayKey(), n: delta }); }
+            if (isNew) {
+              const ng = Object.assign({ id: uid(), entries: [], cycle: 1, cycleOffset: 0, completedCycles: [] }, v);
+              if (want) ng.entries.push({ d: todayKey(), n: want });
+              S.goals.push(ng);
+            } else {
+              Object.assign(g, v);
+              if (!g.cycle) g.cycle = 1;
+              if (g.cycleOffset == null) g.cycleOffset = 0;
+              if (!g.completedCycles) g.completedCycles = [];
+              const delta = want - goalCount(g);
+              if (delta) g.entries.push({ d: todayKey(), n: delta });
+            }
             save(); closeSheet(); render();
           }
         }, 'حفظ')];
@@ -3882,12 +4176,13 @@
           }
         }, icon('trash', 16), 'حذف'));
         openSheet(isNew ? 'هدف جديد' : 'تعديل الهدف', [
-          field('الاسم', name, 'اسم الهدف|مثال: حفظ جزء عم أو إتمام دورة البرمجة. اجعله واضحاً ومحفزاً.'),
-          h('div', { class: 'two' }, field('الوحدة', unit, 'الوحدة|وحدة قياس الهدف. مثال: صفحة، درس، ساعة.'), field('الرقم المستهدف', target, 'الرقم المستهدف|كم عدد الوحدات التي تريد إنجازها؟')),
+          field('الاسم', name, 'اسم الهدف|مثال: ختم القرآن أو إتمام دورة البرمجة. اجعله واضحاً ومحفزاً.'),
+          h('div', { class: 'two' }, field('الوحدة', unit, 'الوحدة|وحدة قياس الهدف. مثال: صفحة، جزء، درس، ساعة.'), field('الرقم المستهدف', target, 'الرقم المستهدف|كم عدد الوحدات التي تريد إنجازها؟ مثال: 604 لختم القرآن.')),
+          field('تكرار الهدف', h('div', null, repeatSelect, customBox, repeatHint), 'تكرار الهدف|يمكنك جعل الهدف يتكرر دورياً كل شهر أو أسبوعين، بحيث يتجدد بعد إتمامه ويبدأ دورة جديدة تلقائياً.'),
           field('الرقم الحالي', current, 'الرقم الحالي|لو كنت بدأت قبل كده اكتب الرقم اللي وصلته.'),
-          h('div', { class: 'two' }, field('تاريخ البداية', h('div', null, start, startHijri), 'تاريخ البداية|امتى بدأت أو هتبدأ؟'), field('الموعد النهائي', h('div', null, dl, dlHijri), 'الموعد النهائي|امتى لازم يخلص الهدف؟ اختياري.')),
+          h('div', { class: 'two' }, field('تاريخ البداية', h('div', null, start, startHijri), 'تاريخ البداية|امتى بدأت أو هتبدأ الدورة؟'), field('الموعد النهائي للدورة', h('div', null, dl, dlHijri), 'الموعد النهائي|امتى تنتهي هذه الدورة؟ يُحسب تلقائياً حسب مدة التكرار أو يمكنك تغييره.')),
           field('هدف أسبوعي (اختياري)', weekly, 'الهدف الأسبوعي|كم وحدة تريد إنجازها كل أسبوع؟'),
-          field('المرحلة (اختياري)', group, 'المرحلة|قسّم أهدافك لمراحل. مثال: المرحلة الأولى.'),
+          field('المرحلة / المجموعة (اختياري)', group, 'المرحلة|قسّم أهدافك لمجموعات. مثال: عبادات، تطوير ذات، دراسة.'),
           field('المخرج النهائي (اختياري)', out, 'المخرج النهائي|إيه اللي هيبقى في إيدك لما تخلص الهدف ده؟'),
           err
         ], foot);
@@ -4094,17 +4389,93 @@
         return p;
       }
 
+      function getRepeatLabel(g) {
+        if (!g.repeatType || g.repeatType === 'none') return '';
+        const n = g.repeatInterval || 1;
+        if (g.repeatType === 'weeks') {
+          if (n === 1) return 'كل أسبوع';
+          if (n === 2) return 'كل أسبوعين';
+          return 'كل ' + n + ' أسابيع';
+        }
+        if (g.repeatType === 'months') {
+          if (n === 1) return 'كل شهر';
+          if (n === 2) return 'كل شهرين';
+          return 'كل ' + n + ' أشهر';
+        }
+        return '';
+      }
+
+      function renewGoal(g) {
+        const tk = todayKey();
+        const total = goalCount(g);
+        // Archive current cycle
+        if (!g.completedCycles) g.completedCycles = [];
+        g.completedCycles.push({
+          cycle: g.cycle || 1,
+          total: total,
+          target: g.target,
+          start: g.start,
+          deadline: g.deadline || '',
+          completedAt: tk
+        });
+
+        // Calculate new deadline
+        let newDeadline = '';
+        if (g.repeatType && g.repeatType !== 'none') {
+          const interval = g.repeatInterval || 1;
+          const baseDate = today();
+          if (g.repeatType === 'weeks') {
+            newDeadline = key(addDays(baseDate, interval * 7));
+          } else if (g.repeatType === 'months') {
+            const nd = new Date(baseDate.getFullYear(), baseDate.getMonth() + interval, baseDate.getDate());
+            newDeadline = key(nd);
+          }
+        }
+
+        // Reset for new cycle
+        g.cycle = (g.cycle || 1) + 1;
+        g.cycleOffset = linkedGoalCount(g);
+        g.start = tk;
+        g.deadline = newDeadline;
+        g.entries = [];
+
+        save();
+        render();
+      }
+
       function goalCard(g) {
         const o = pace(g), tk = todayKey(), wk = weekDays(tk);
         const pct = g.target ? Math.min(100, Math.round(o.total / g.target * 100)) : 0;
+        const isRepeating = g.repeatType && g.repeatType !== 'none';
+        const isDoneGoal = !!(g.target && o.done);
+
+        // Celebration banner for completed goals
+        const doneBanner = isDoneGoal ? h('div', { class: 'goal-done-banner' },
+          h('span', { class: 'goal-done-trophy' }, '🏆'),
+          h('div', { class: 'goal-done-text' },
+            h('div', { class: 'goal-done-title' }, 'ما شاء الله! أتممت الهدف بنجاح'),
+            h('div', { class: 'goal-done-sub' }, 'أنجزت ' + num(o.total) + ' ' + g.unit + (isRepeating ? ' · الدورة #' + (g.cycle || 1) : ''))
+          )
+        ) : null;
+
+        // Top row with badges
+        const topBadges = [];
+        if (isRepeating) {
+          topBadges.push(h('span', { class: 'repeat-badge' }, '🔄 ' + getRepeatLabel(g)));
+        }
+        if ((g.cycle || 1) > 1) {
+          topBadges.push(h('span', { class: 'cycle-badge' }, '🔢 الدورة #' + g.cycle));
+        }
+
         let chip = null;
         if (g.target) {
-          if (o.done) chip = h('span', { class: 'pill ok' }, 'خلص');
+          if (isDoneGoal) chip = h('span', { class: 'pill ok', style: 'font-weight:800;font-size:.82rem' }, '✅ مكتمل');
           else if (o.overdue) chip = h('span', { class: 'pill bad' }, 'الموعد عدّى');
           else if (o.total === 0) chip = h('span', { class: 'pill' }, 'لسه ما بدأتش');
           else if (o.late) chip = h('span', { class: 'pill bad' }, 'متأخر');
           else chip = h('span', { class: 'pill ok' }, 'على المسار');
         }
+
         const lines = [];
         if (g.target && !o.done) {
           lines.push('المتبقي ' + num(o.remaining) + ' ' + g.unit);
@@ -4112,11 +4483,44 @@
           if (o.eta) lines.push('بالسرعة الحالية هتخلص ' + fmtDateWithHijri(o.eta));
         }
         if (g.weekly) { lines.push('الأسبوع ده: ' + num(goalCount(g, wk[0], wk[6])) + ' من ' + g.weekly + ' ' + g.unit); }
-        return h('div', { class: 'card' },
-          h('div', { class: 'goal-top' }, h('div', null, h('div', { class: 'goal-name' }, g.name), g.outcome ? h('div', { class: 'goal-out' }, 'المخرج: ' + g.outcome) : null), chip),
-          g.target ? h('div', { class: 'bar', role: 'progressbar', 'aria-valuenow': String(pct), 'aria-valuemin': '0', 'aria-valuemax': '100' }, h('i', { style: 'width:' + pct + '%' })) : null,
+        if (isRepeating && g.deadline && !isDoneGoal) {
+          lines.push('نهاية الدورة الحالية: ' + fmtDateWithHijri(g.deadline));
+        }
+
+        // Completed cycles summary
+        const cyclesHistory = (g.completedCycles && g.completedCycles.length) ? h('div', { style: 'margin-top:8px;padding:8px 10px;background:var(--soft);border-radius:10px;font-size:.82rem;color:var(--ink2)' },
+          h('span', { style: 'font-weight:700;color:var(--ink)' }, '📜 ' + g.completedCycles.length + (g.completedCycles.length === 1 ? ' دورة مكتملة سابقاً' : ' دورات مكتملة سابقاً'))
+        ) : null;
+
+        // Renew button for completed repeating goals
+        const renewSection = (isDoneGoal && isRepeating) ? h('div', { style: 'margin-top:12px;text-align:center' },
+          h('button', {
+            class: 'goal-renew-btn',
+            onclick: (e) => {
+              e.stopPropagation();
+              renewGoal(g);
+            }
+          }, '🔄 بدء دورة جديدة (#' + ((g.cycle || 1) + 1) + ')')
+        ) : null;
+
+        const cardClass = 'card' + (isDoneGoal ? ' goal-done-card' : '');
+        const barClass = 'bar' + (isDoneGoal ? ' goal-bar-done' : '');
+
+        return h('div', { class: cardClass },
+          doneBanner,
+          h('div', { class: 'goal-top' },
+            h('div', null,
+              h('div', { class: 'goal-name' }, g.name),
+              g.outcome ? h('div', { class: 'goal-out' }, 'المخرج: ' + g.outcome) : null,
+              topBadges.length ? h('div', { style: 'display:flex;flex-wrap:wrap;gap:4px;margin-top:4px' }, topBadges) : null
+            ),
+            chip
+          ),
+          g.target ? h('div', { class: barClass, role: 'progressbar', 'aria-valuenow': String(pct), 'aria-valuemin': '0', 'aria-valuemax': '100' }, h('i', { style: 'width:' + pct + '%' })) : null,
           h('div', { class: 'goal-num', style: g.target ? '' : 'margin-top:10px' }, num(o.total), g.target ? h('small', null, ' من ' + num(g.target) + ' ' + g.unit) : h('small', null, ' ' + g.unit)),
           lines.length ? h('ul', { class: 'goal-lines' }, lines.map(l => h('li', null, l))) : null,
+          cyclesHistory,
+          renewSection,
           h('div', { class: 'goal-act' },
             h('button', { class: 'step add', 'aria-label': 'زوّد واحد', onclick: () => { g.entries.push({ d: tk, n: 1 }); save(); render(); } }, icon('plus')),
             h('button', { class: 'step', 'aria-label': 'نقّص واحد', onclick: () => { if (goalCount(g) > 0) { g.entries.push({ d: tk, n: -1 }); save(); render(); } } }, icon('minus')),
@@ -4130,6 +4534,9 @@
               }
             }, 'حذف')));
       }
+
+      const collapsedGroups = new Set();
+
       function viewGoals() {
         const p = h('div', { class: 'page' });
         if (!S.goals.length) {
@@ -4138,12 +4545,74 @@
             h('button', { class: 'btn primary', onclick: () => goalEditor(null) }, 'هدف جديد')));
           return p;
         }
-        const groups = {}; S.goals.forEach(g => { const n = g.group || ''; (groups[n] = groups[n] || []).push(g); });
+
+        // Separate done vs active
+        const doneGoals = S.goals.filter(g => g.target && pace(g).done && !(g.repeatType && g.repeatType !== 'none'));
+        const activeGoals = S.goals.filter(g => !doneGoals.includes(g));
+
+        const groups = {}; activeGoals.forEach(g => { const n = g.group || ''; (groups[n] = groups[n] || []).push(g); });
         const names = Object.keys(groups).sort((a, b) => a === '' ? 1 : b === '' ? -1 : 0);
+
+        // Summary bar
+        const totalGoals = S.goals.length;
+        const totalDone = S.goals.filter(g => g.target && pace(g).done).length;
+        if (totalGoals > 3) {
+          p.append(h('div', { style: 'display:flex;align-items:center;justify-content:space-between;padding:8px 4px;margin-bottom:4px' },
+            h('span', { style: 'font-size:.88rem;color:var(--ink2);font-weight:600' }, totalGoals + ' أهداف · ' + totalDone + ' مكتمل'),
+            h('div', { class: 'bar', style: 'flex:1;max-width:120px;margin:0 0 0 12px;height:8px' },
+              h('i', { style: 'width:' + (totalGoals ? Math.round(totalDone / totalGoals * 100) : 0) + '%' })
+            )
+          ));
+        }
+
         names.forEach(n => {
-          if (names.length > 1 || n) p.append(h('div', { class: 'grp' }, n || 'أهداف أخرى'));
-          groups[n].forEach(g => p.append(goalCard(g)));
+          const groupKey = 'g_' + n;
+          const isCollapsed = collapsedGroups.has(groupKey);
+          const goalsInGroup = groups[n];
+
+          if (names.length > 1 || n) {
+            const headerEl = h('div', {
+              class: 'grp goal-group-header' + (isCollapsed ? ' collapsed' : ''),
+              onclick: () => {
+                if (collapsedGroups.has(groupKey)) collapsedGroups.delete(groupKey);
+                else collapsedGroups.add(groupKey);
+                render();
+              }
+            },
+              h('span', null, (n || 'أهداف أخرى') + ' (' + goalsInGroup.length + ')'),
+              h('span', { class: 'chevron' }, icon('chevL', 16))
+            );
+            p.append(headerEl);
+          }
+
+          const bodyEl = h('div', { class: 'goal-group-body' + (isCollapsed ? ' collapsed' : '') });
+          goalsInGroup.forEach(g => bodyEl.append(goalCard(g)));
+          p.append(bodyEl);
         });
+
+        // Completed non-repeating goals in a collapsible section
+        if (doneGoals.length) {
+          const doneKey = 'g_done_section';
+          const isDoneCollapsed = collapsedGroups.has(doneKey);
+
+          p.append(h('div', {
+            class: 'grp goal-group-header' + (isDoneCollapsed ? ' collapsed' : ''),
+            style: 'margin-top:24px',
+            onclick: () => {
+              if (collapsedGroups.has(doneKey)) collapsedGroups.delete(doneKey);
+              else collapsedGroups.add(doneKey);
+              render();
+            }
+          },
+            h('span', null, '✅ أهداف مكتملة (' + doneGoals.length + ')'),
+            h('span', { class: 'chevron' }, icon('chevL', 16))
+          ));
+
+          const doneBody = h('div', { class: 'goal-group-body' + (isDoneCollapsed ? ' collapsed' : '') });
+          doneGoals.forEach(g => doneBody.append(goalCard(g)));
+          p.append(doneBody);
+        }
+
         p.append(h('div', { class: 'task-bottom-spacer', style: 'height:80px;clear:both', 'aria-hidden': 'true' }));
         return p;
       }
